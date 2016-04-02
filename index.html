@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>D3 Prototyping</title>
+    <!--<link href="css/timeline.css" rel="stylesheet" type="text/css"/>-->
+    <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    <script src="build/timeline.js"></script>
+</head>
+
+<body>
+    <div id="rootdiv"></div>
+</body>
+
+<script type="text/javascript" >
+
+    var data = [[0.016095323151813057, 0.8348491571902592],
+ [0.3828042371840048, 0.044252412280428755],
+ [0.5745918933709045, 0.16217406918828792],
+ [0.6194020695735519, 0.5398007474909314],
+ [0.714511811607523, 0.7283553683516948],
+ [0.9193857755668613, 0.4286653036300776],
+ [0.4550076542479452, 0.6521588450119351],
+ [0.05941943077611411, 0.5839659269165522],
+ [0.7360279452267019, 0.40122368648397144],
+ [0.5699530017866273, 0.14129655909206473]];
+
+    timeline.timeline("#rootdiv", data);
+
+</script>
+
+</html>

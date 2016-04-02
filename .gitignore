@@ -1,0 +1,10 @@
+.DS_Store
+.idea
+_data*
+_libs*
+_images*
+__pycache*
+node_modules
+npm-debug.log
+*.zip
+*.ipynb_checkpoints
