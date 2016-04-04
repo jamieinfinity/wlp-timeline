@@ -1,1 +1,1 @@
-export {default as timeline} from "./src/timeline";
+export {drawTimeline} from "./src/timeline";

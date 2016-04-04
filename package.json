@@ -13,7 +13,7 @@
   "scripts": {
     "dostuff": "node -e 'process.stdout.write(\"var version = \\\"\" + require(\"./package.json\").version + \"\\\";export * from \\\"../index\\\"; export {version};\");' > build/bundle.js",
     "rollup": "rollup -f umd -u timeline -n timeline -o build/timeline.js -- build/bundle.js",
-    "pretest": "mkdir -p build && npm run dostuff && npm run rollup && cp build/timeline.js ../../js/timeline.js",
+    "pretest": "mkdir -p build && npm run dostuff && npm run rollup",
     "test": "faucet `find test -name '*-test.js'` && eslint index.js src",
     "uglify": "uglifyjs build/timeline.js -c -m -o build/timeline.min.js",
     "build": "rm -f build/timeline.zip && zip -j build/timeline.zip -- LICENSE README.mdbuild/timeline.js build/timeline.min.js",
