@@ -69,6 +69,13 @@ function zoomed() {
     svgAxesTimeline.select(".x.axis").call(timelineXAxis);
     svgAxesTimeline.select(".x.axis-weeks").call(timelineXAxisWeeks);
     svgAxesTimeline.select(".x.axis-months").call(timelineXAxisMonths);
+
+    svgAxesTimeline.selectAll("path").style("fill", "none");
+    svgAxesTimeline.selectAll("line").style("stroke", "#eee");
+
+    svgAxesTimeline.select(".x.axis").selectAll("line").style("stroke-width", 1);
+    svgAxesTimeline.select(".x.axis-weeks").selectAll("line").style("stroke-width", 2);
+    svgAxesTimeline.select(".x.axis-months").selectAll("line").style("stroke-width", 3);
 }
 
 
@@ -87,6 +94,17 @@ function drawTimeline(domElement, width) {
             zoomed();
         });
 
+    var rootmargin = 20;
+    d3.select(domElement)
+        .style("font-family", "Avenir")
+        .style("font-size", "10px")
+        //.style("background-color", "white")
+        .style("top", rootmargin+"px")
+        .style("bottom", rootmargin+"px")
+        .style("left", rootmargin+"px")
+        .style("right", rootmargin+"px")
+        .style("position", "absolute");
+
     svgRootTimeline = d3.select(domElement).append("svg")
         .attr("width", timelineWidth + timelineMargin.left + timelineMargin.right)
         .attr("height", timelineHeight + timelineMargin.top/2 + timelineMargin.bottom);
@@ -96,19 +114,28 @@ function drawTimeline(domElement, width) {
         .attr("transform", "translate(" + timelineMargin.left + "," + timelineMargin.top/2 + ")");
 
     svgAxesTimeline.append("g")
+        .attr("fill", "#999") // text color
         .attr("class", "x axis")
         .attr("transform", "translate(0," + timelineHeight + ")")
         .call(timelineXAxis);
 
     svgAxesTimeline.append("g")
+        .attr("fill", "#999") // text color
         .attr("class", "x axis-weeks")
         .attr("transform", "translate(0," + timelineHeight + ")")
         .call(timelineXAxisWeeks);
 
     svgAxesTimeline.append("g")
+        .attr("fill", "#999") // text color
         .attr("class", "x axis-months")
         .attr("transform", "translate(0," + timelineHeight + ")")
         .call(timelineXAxisMonths);
+
+    svgAxesTimeline.selectAll("path").style("fill", "none");
+    svgAxesTimeline.selectAll("line").style("stroke", "#eee");
+    svgAxesTimeline.select(".x.axis").selectAll("line").style("stroke-width", 1);
+    svgAxesTimeline.select(".x.axis-weeks").selectAll("line").style("stroke-width", 2);
+    svgAxesTimeline.select(".x.axis-months").selectAll("line").style("stroke-width", 3);
 
     svgInnerTimeline = svgRootTimeline.append("svg")
         .attr("vector-effect", "non-scaling-stroke")
