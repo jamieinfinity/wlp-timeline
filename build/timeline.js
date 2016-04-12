@@ -16,8 +16,6 @@
     var timelineXAxisBottomMinor;
     var timelineXAxisBottomMajor;
     var timelineXAxisDays;
-    var timelineXAxisWeeks;
-    var timelineXAxisMonths;
 
     var sharedTimeScale;
     var zoom;
@@ -27,17 +25,7 @@
 
         sharedTimeScale = d3.time.scale().domain([minDate, maxDate]).range([0, timelineWidth]);
 
-        // var customTimeFormat = d3.time.format.multi([
-        //     [".%L", function(d) { return d.getMilliseconds(); }],
-        //     [":%S", function(d) { return d.getSeconds(); }],
-        //     ["%_I:%M", function(d) { return d.getMinutes(); }],
-        //     ["%_I %p", function(d) { return d.getHours(); }],
-        //     ["%a %d", function(d) { return d.getDay() && d.getDate() != 1; }],
-        //     ["%b %e", function(d) { return d.getDate() != 1; }],
-        //     ["%b", function(d) { return d.getMonth(); }],
-        //     ["%Y", function() { return true; }]
-        // ]);
-
+        // Two formats are used so they can be styled differently (i.e. one bold, the other not)
         var customTimeFormatMinor = d3.time.format.multi([
             [".%L", function(d) { return d.getMilliseconds(); }],
             [":%S", function(d) { return d.getSeconds(); }],
@@ -79,20 +67,6 @@
             .tickSize(-timelineHeight)
             .ticks(d3.time.days, 1)
             .tickFormat("");
-
-        timelineXAxisWeeks = d3.svg.axis()
-            .scale(sharedTimeScale)
-            .orient("bottom")
-            .tickSize(-timelineHeight)
-            .ticks(d3.time.weeks, 1)
-            .tickFormat("");
-
-        timelineXAxisMonths = d3.svg.axis()
-            .scale(sharedTimeScale)
-            .orient("bottom")
-            .tickSize(-timelineHeight)
-            .ticks(d3.time.months, 1)
-            .tickFormat('');
     }
 
     function timelineSpanInDays() {
@@ -101,12 +75,12 @@
         return (maxDate.getTime() - minDate.getTime())/1000/3600/24;
     }
 
-    function zoomed() {
+
+
+    function updateTimeline() {
         svgAxesTimeline.select(".x.axisBottomMinor").call(timelineXAxisBottomMinor);
         svgAxesTimeline.select(".x.axisBottomMajor").call(timelineXAxisBottomMajor);
         svgAxesTimeline.select(".x.axis-days").call(timelineXAxisDays);
-        svgAxesTimeline.select(".x.axis-weeks").call(timelineXAxisWeeks);
-        svgAxesTimeline.select(".x.axis-months").call(timelineXAxisMonths);
 
         svgAxesTimeline.selectAll("path").style("fill", "none");
         svgAxesTimeline.selectAll("line").style("stroke", "#eee");
@@ -122,24 +96,7 @@
                 }
                 return "visible";
             });
-        svgAxesTimeline.select(".x.axis-weeks").selectAll("line")
-            .style("stroke-width", 2)
-            .style("visibility", function() {
-                if(timelineSpanInDays() > 90) {
-                    return "hidden";
-                }
-                return "visible";
-            });
-        svgAxesTimeline.select(".x.axis-months").selectAll("line")
-            .style("stroke-width", 3)
-            .style("visibility", function() {
-                if(timelineSpanInDays() > 366) {
-                    return "hidden";
-                }
-                return "visible";
-            });
     }
-
 
 
 
@@ -155,7 +112,7 @@
             .x(sharedTimeScale)
             .scaleExtent([-2000, 2000])
             .on("zoom", function() {
-                zoomed();
+                updateTimeline();
             });
 
         var rootmargin = 20;
@@ -180,60 +137,19 @@
         svgAxesTimeline.append("g")
             .attr("fill", "#aaa") // text color
             .attr("class", "x axisBottomMinor")
-            .attr("transform", "translate(0," + timelineHeight + ")")
-            .call(timelineXAxisBottomMinor);
+            .attr("transform", "translate(0," + timelineHeight + ")");
 
         svgAxesTimeline.append("g")
             .attr("fill", "#666") // text color
             .attr("class", "x axisBottomMajor")
-            .attr("transform", "translate(0," + timelineHeight + ")")
-            .call(timelineXAxisBottomMajor);
-
-        svgAxesTimeline.append("g")
-            .attr("class", "x axis-weeks")
-            .attr("transform", "translate(0," + timelineHeight + ")")
-            .call(timelineXAxisWeeks);
-
-        svgAxesTimeline.append("g")
-            .attr("class", "x axis-months")
-            .attr("transform", "translate(0," + timelineHeight + ")")
-            .call(timelineXAxisMonths);
+            .attr("transform", "translate(0," + timelineHeight + ")");
 
         svgAxesTimeline.append("g")
             .attr("class", "x axis-days")
             .attr("transform", "translate(0," + timelineHeight + ")")
-            .attr("stroke-dasharray", "2,2")
-            .call(timelineXAxisDays);
+            .attr("stroke-dasharray", "2,2");
 
-        svgAxesTimeline.selectAll("path").style("fill", "none");
-        svgAxesTimeline.selectAll("line").style("stroke", "#eee");
-        svgAxesTimeline.select(".x.axisBottomMinor").selectAll("line").style("stroke-width", 1);
-        svgAxesTimeline.select(".x.axisBottomMajor").selectAll("line").style("stroke-width", 1);
-        svgAxesTimeline.select(".x.axis-days").selectAll("line")
-            .style("stroke", "#ccc")
-            .style("stroke-width", 1)
-            .style("visibility", function() {
-                if(timelineSpanInDays() > 60) {
-                    return "hidden";
-                }
-                return "visible";
-            });
-        svgAxesTimeline.select(".x.axis-weeks").selectAll("line")
-            .style("stroke-width", 2)
-            .style("visibility", function() {
-                if(timelineSpanInDays() > 90) {
-                    return "hidden";
-                }
-                return "visible";
-            });
-        svgAxesTimeline.select(".x.axis-months").selectAll("line")
-            .style("stroke-width", 3)
-            .style("visibility", function() {
-                if(timelineSpanInDays() > 366) {
-                    return "hidden";
-                }
-                return "visible";
-            });
+        updateTimeline();
 
         svgInnerTimeline = svgRootTimeline.append("svg")
             .attr("vector-effect", "non-scaling-stroke")
@@ -247,7 +163,7 @@
 
         svgInnerTimeline.append("rect")
             .attr("fill", "white")
-            .attr("fill-opacity", 0.0)
+            .attr("fill-opacity", 0)
             .attr("width", timelineWidth)
             .attr("height", timelineHeight)
             .attr("class", "innertimelinebackground");
