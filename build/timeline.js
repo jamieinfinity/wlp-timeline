@@ -16,6 +16,7 @@
     var timelineXAxisBottomMinor;
     var timelineXAxisBottomMajor;
     var timelineXAxisDays;
+    var timelineXAxisDaysHidden;
 
     var sharedTimeScale;
     var zoom;
@@ -67,6 +68,13 @@
             .tickSize(-timelineHeight)
             .ticks(d3.time.days, 1)
             .tickFormat("");
+
+        timelineXAxisDaysHidden = d3.svg.axis()
+            .scale(sharedTimeScale)
+            .orient("bottom")
+            .tickSize(0)
+            .ticks(d3.time.years, 1)
+            .tickFormat("");
     }
 
     function timelineSpanInDays() {
@@ -80,7 +88,12 @@
     function updateTimeline() {
         svgAxesTimeline.select(".x.axisBottomMinor").call(timelineXAxisBottomMinor);
         svgAxesTimeline.select(".x.axisBottomMajor").call(timelineXAxisBottomMajor);
-        svgAxesTimeline.select(".x.axis-days").call(timelineXAxisDays);
+
+        if (timelineSpanInDays() > 60) {
+            svgAxesTimeline.select(".x.axis-days").call(timelineXAxisDaysHidden);
+        } else {
+            svgAxesTimeline.select(".x.axis-days").call(timelineXAxisDays);
+        }
 
         svgAxesTimeline.selectAll("path").style("fill", "none");
         svgAxesTimeline.selectAll("line").style("stroke", "#eee");
@@ -88,14 +101,8 @@
         svgAxesTimeline.select(".x.axisBottomMinor").selectAll("line").style("stroke-width", 1);
         svgAxesTimeline.select(".x.axisBottomMajor").selectAll("line").style("stroke-width", 1);
         svgAxesTimeline.select(".x.axis-days").selectAll("line")
-            .style("stroke", "#ccc")
-            .style("stroke-width", 1)
-            .style("visibility", function() {
-                if(timelineSpanInDays() > 60) {
-                    return "hidden";
-                }
-                return "visible";
-            });
+            .style("stroke", "#bbb")
+            .style("stroke-width", 1);
     }
 
 
@@ -110,7 +117,7 @@
 
         zoom = d3.behavior.zoom()
             .x(sharedTimeScale)
-            .scaleExtent([-2000, 2000])
+            .scaleExtent([-3000, 3000])
             .on("zoom", function() {
                 updateTimeline();
             });
@@ -152,7 +159,7 @@
         updateTimeline();
 
         svgInnerTimeline = svgRootTimeline.append("svg")
-            .attr("vector-effect", "non-scaling-stroke")
+            // .attr("vector-effect", "non-scaling-stroke")
             .attr("width",  timelineWidth)
             .attr("height", timelineHeight)
             .attr("x", timelineMargin.left)
