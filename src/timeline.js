@@ -3,7 +3,7 @@
 //import {d3} from "d3";
 
 
-export {drawTimeline};
+export {drawTimeline, addData};
 
 var timelineMargin = {top: 20, right: 20, bottom: 20, left: 20},
     timelineHeight = 70 - timelineMargin.top - timelineMargin.bottom;
@@ -21,6 +21,9 @@ var timelineXAxisDaysHidden;
 
 var sharedTimeScale;
 var zoom;
+
+var pointsSelection;
+var pointsData;
 
 
 function setUpCommonTimeAxis(minDate, maxDate) {
@@ -87,6 +90,11 @@ function timelineSpanInDays() {
 
 
 function updateTimeline() {
+
+    if(pointsData) {
+        updatePoints();
+    }
+
     svgAxesTimeline.select(".x.axisBottomMinor").call(timelineXAxisBottomMinor);
     svgAxesTimeline.select(".x.axisBottomMajor").call(timelineXAxisBottomMajor);
 
@@ -110,10 +118,10 @@ function updateTimeline() {
 
 function drawTimeline(domElement, width) {
 
-    timelineWidth = width - timelineMargin.left - timelineMargin.right;;
+    timelineWidth = width - timelineMargin.left - timelineMargin.right;
 
-    var minDate = new Date('January 1, 2016');
-    var maxDate = new Date('January 1, 2017');
+    var minDate = new Date('Jan 1, 2016');
+    var maxDate = new Date();
     setUpCommonTimeAxis(minDate, maxDate);
 
     zoom = d3.behavior.zoom()
@@ -188,5 +196,31 @@ function drawTimeline(domElement, width) {
         .attr("stroke", "#eee")
         .attr("stroke-width", 3)
         .attr("class", "outertimelinebackground");
+
+}
+
+
+
+function setEventRectAttributes(selection) {
+    return selection.attr("cy", timelineHeight/2)
+        .attr("cx", function(d) {
+            return sharedTimeScale(d);
+        })
+        .attr("r", 5)
+        .attr("fill", "black");
+}
+
+function updatePoints() {
+    var points = setEventRectAttributes(pointsSelection.selectAll('circle').data(pointsData));
+    setEventRectAttributes(points.enter().append('circle'));
+    points.exit().remove();
+}
+
+function addData(data) {
+
+    pointsData = data;
+    pointsSelection = svgInnerTimeline.append('g');
+
+    updatePoints();
 
 }

@@ -21,6 +21,9 @@
     var sharedTimeScale;
     var zoom;
 
+    var pointsSelection;
+    var pointsData;
+
 
     function setUpCommonTimeAxis(minDate, maxDate) {
 
@@ -86,6 +89,11 @@
 
 
     function updateTimeline() {
+
+        if(pointsData) {
+            updatePoints();
+        }
+
         svgAxesTimeline.select(".x.axisBottomMinor").call(timelineXAxisBottomMinor);
         svgAxesTimeline.select(".x.axisBottomMajor").call(timelineXAxisBottomMajor);
 
@@ -109,10 +117,10 @@
 
     function drawTimeline(domElement, width) {
 
-        timelineWidth = width - timelineMargin.left - timelineMargin.right;;
+        timelineWidth = width - timelineMargin.left - timelineMargin.right;
 
-        var minDate = new Date('January 1, 2016');
-        var maxDate = new Date('January 1, 2017');
+        var minDate = new Date('Jan 1, 2016');
+        var maxDate = new Date();
         setUpCommonTimeAxis(minDate, maxDate);
 
         zoom = d3.behavior.zoom()
@@ -190,9 +198,36 @@
 
     }
 
+
+
+    function setEventRectAttributes(selection) {
+        return selection.attr("cy", timelineHeight/2)
+            .attr("cx", function(d) {
+                return sharedTimeScale(d);
+            })
+            .attr("r", 5)
+            .attr("fill", "black");
+    }
+
+    function updatePoints() {
+        var points = setEventRectAttributes(pointsSelection.selectAll('circle').data(pointsData));
+        setEventRectAttributes(points.enter().append('circle'));
+        points.exit().remove();
+    }
+
+    function addData(data) {
+
+        pointsData = data;
+        pointsSelection = svgInnerTimeline.append('g');
+
+        updatePoints();
+
+    }
+
     var version = "0.0.1";
 
     exports.version = version;
     exports.drawTimeline = drawTimeline;
+    exports.addData = addData;
 
 }));

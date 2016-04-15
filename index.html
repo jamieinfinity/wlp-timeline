@@ -15,7 +15,18 @@
 
 <script type="text/javascript" >
 
+    function randomDate(start, end) {
+       return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+    }
+
     timeline.drawTimeline("#rootdiv", 900);
+
+    var dates = [];
+    for(var i=0; i<10; i++) {
+        dates.push(randomDate(new Date(2016, 0, 1), new Date()));
+    }
+
+    timeline.addData(dates);
 
 </script>
 
