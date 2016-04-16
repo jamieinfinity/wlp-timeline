@@ -14,10 +14,10 @@ var svgInnerTimeline;
 var svgOuterTimeline;
 var svgAxesTimeline;
 
-var timelineXAxisBottomMinor;
+var timelineXAxisMain;
 var timelineXAxisDays;
 var timelineXAxisDayNames;
-var timelineXAxisDaysHidden;
+var timelineXAxisHidden;
 
 var sharedTimeScale;
 var zoom;
@@ -26,58 +26,39 @@ var pointsSelection;
 var pointsData;
 
 
+function makeTimeFormat(mil, sec, min, hr, day, day2, month, year) {
+    return d3.time.format.multi([
+        [mil, function(d) { return d.getMilliseconds(); }],
+        [sec, function(d) { return d.getSeconds(); }],
+        [min, function(d) { return d.getMinutes(); }],
+        [hr, function(d) { return d.getHours(); }],
+        [day, function(d) { return d.getDay() && d.getDate() != 1; }],
+        [day2, function(d) { return d.getDate() != 1; }],
+        [month, function(d) { return d.getMonth(); }],
+        [year, function() { return true; }]
+    ]);
+}
+
+function makeTimelineAxis(scale, format, orient, size, padding) {
+        return d3.svg.axis()
+        .scale(scale)
+        .tickFormat(format)
+        .orient(orient)
+        .tickSize(size)
+        .tickPadding(padding);
+}
+
 function setUpCommonTimeAxis(minDate, maxDate) {
 
     sharedTimeScale = d3.time.scale().domain([minDate, maxDate]).range([0, timelineWidth]);
 
-    var customTimeFormat = d3.time.format.multi([
-        [".%L", function(d) { return d.getMilliseconds(); }],
-        [":%S", function(d) { return d.getSeconds(); }],
-        ["%_I:%M", function(d) { return d.getMinutes(); }],
-        ["%_I %p", function(d) { return d.getHours(); }],
-        ["%b %-d", function(d) { return d.getDay() && d.getDate() != 1; }],
-        ["%b %-d", function(d) { return d.getDate() != 1; }],
-        ["%b", function(d) { return d.getMonth(); }],
-        ["%Y", function() { return true; }]
-    ]);
-    var customTimeFormatDayNames = d3.time.format.multi([
-        [" ", function(d) { return d.getMilliseconds(); }],
-        [" ", function(d) { return d.getSeconds(); }],
-        [" ", function(d) { return d.getMinutes(); }],
-        [" ", function(d) { return d.getHours(); }],
-        ["%a", function(d) { return d.getDay() && d.getDate() != 1; }],
-        ["%a", function(d) { return d.getDate() != 1; }],
-        ["%a", function(d) { return d.getMonth(); }],
-        [" ", function() { return true; }]
-    ]);
+    var customTimeFormat = makeTimeFormat(".%L", ":%S", "%_I:%M", "%_I %p", "%b %-d", "%b %-d", "%b", "%Y");
+    var customTimeFormatDayNames = makeTimeFormat(" ", " ", " ", " ", "%a", "%a", "%a", " ");
 
-    timelineXAxisBottomMinor = d3.svg.axis()
-        .scale(sharedTimeScale)
-        .orient("bottom")
-        .tickFormat(customTimeFormat)
-        .tickSize(-timelineHeight)
-        .tickPadding(6);
-
-    timelineXAxisDayNames = d3.svg.axis()
-        .scale(sharedTimeScale)
-        .orient("bottom")
-        .tickSize(-timelineHeight)
-        .tickFormat(customTimeFormatDayNames)
-        .tickPadding(18);
-
-    timelineXAxisDays = d3.svg.axis()
-        .scale(sharedTimeScale)
-        .orient("bottom")
-        .tickSize(-timelineHeight)
-        .ticks(d3.time.days, 1)
-        .tickFormat("");
-
-    timelineXAxisDaysHidden = d3.svg.axis()
-        .scale(sharedTimeScale)
-        .orient("bottom")
-        .tickSize(0)
-        .ticks(d3.time.years, 1)
-        .tickFormat("");
+    timelineXAxisMain = makeTimelineAxis(sharedTimeScale, customTimeFormat, "bottom", -timelineHeight, 6);
+    timelineXAxisDayNames = makeTimelineAxis(sharedTimeScale, customTimeFormatDayNames, "bottom", -timelineHeight, 18);
+    timelineXAxisDays = makeTimelineAxis(sharedTimeScale, "", "bottom", -timelineHeight, 0).ticks(d3.time.days, 1);
+    timelineXAxisHidden = makeTimelineAxis(sharedTimeScale, "", "bottom", 0, 0).ticks(d3.time.years, 1);
 }
 
 function timelineSpanInDays() {
@@ -86,7 +67,13 @@ function timelineSpanInDays() {
     return (maxDate.getTime() - minDate.getTime())/1000/3600/24;
 }
 
-
+function resetTimeAxis(axisPath, axisFunction, visibleMaxDays) {
+    if (visibleMaxDays > 0 && timelineSpanInDays() > visibleMaxDays) {
+        svgAxesTimeline.select(axisPath).call(timelineXAxisHidden);
+    } else {
+        svgAxesTimeline.select(axisPath).call(axisFunction);
+    }
+}
 
 function updateTimeline() {
 
@@ -94,31 +81,16 @@ function updateTimeline() {
         updatePoints();
     }
 
-    svgAxesTimeline.select(".x.axisBottomMinor").call(timelineXAxisBottomMinor);
-
-    if (timelineSpanInDays() > 60) {
-        svgAxesTimeline.select(".x.axis-day-names").call(timelineXAxisDaysHidden);
-        svgAxesTimeline.select(".x.axis-days").call(timelineXAxisDaysHidden);
-    } else {
-        svgAxesTimeline.select(".x.axis-day-names").call(timelineXAxisDayNames);
-        svgAxesTimeline.select(".x.axis-days").call(timelineXAxisDays);
-    }
-
-    svgAxesTimeline.selectAll("path").style("fill", "none");
-    // svgAxesTimeline.selectAll("line").style("stroke", "#eee");
-
-    svgAxesTimeline.select(".x.axisBottomMinor").selectAll("line")
-        .style("stroke", "#eee")
-        .style("stroke-width", 1);
-    svgAxesTimeline.select(".x.axis-day-names").selectAll("line")
-        .style("stroke", "#eee")
-        .style("stroke-width", 1);
-    svgAxesTimeline.select(".x.axis-days").selectAll("line")
-        .style("stroke", "#ccc")
-        .style("stroke-width", 2);
+    resetTimeAxis(".x.axisMain", timelineXAxisMain, 0);
+    resetTimeAxis(".x.axis-day-names", timelineXAxisDayNames, 60);
+    resetTimeAxis(".x.axis-days", timelineXAxisDays, 60);
 }
 
-
+function appendAxisGroup(selection, axisPath, yOffset) {
+    selection.append("g")
+        .attr("class", axisPath)
+        .attr("transform", "translate(0," + yOffset + ")");
+}
 
 function drawTimeline(domElement, width) {
 
@@ -135,15 +107,14 @@ function drawTimeline(domElement, width) {
             updateTimeline();
         });
 
-    var rootmargin = 20;
+    var rootMargin = 20;
     d3.select(domElement)
         .style("font-family", "Avenir")
         .style("font-size", "10px")
-        //.style("background-color", "white")
-        .style("top", rootmargin+"px")
-        .style("bottom", rootmargin+"px")
-        .style("left", rootmargin+"px")
-        .style("right", rootmargin+"px")
+        .style("top", rootMargin+"px")
+        .style("bottom", rootMargin+"px")
+        .style("left", rootMargin+"px")
+        .style("right", rootMargin+"px")
         .style("position", "absolute");
 
     svgRootTimeline = d3.select(domElement).append("svg")
@@ -154,25 +125,14 @@ function drawTimeline(domElement, width) {
         .attr("pointer-events", "none")
         .attr("transform", "translate(" + timelineMargin.left + "," + timelineMargin.top/2 + ")");
 
-    svgAxesTimeline.append("g")
-        .attr("fill", "#aaa") // text color
-        .attr("class", "x axisBottomMinor")
-        .attr("transform", "translate(0," + timelineHeight + ")");
-
-    svgAxesTimeline.append("g")
-        .attr("fill", "#ddd") // text color
-        .attr("class", "x axis-day-names")
-        .attr("transform", "translate(0," + timelineHeight + ")");
-
-    svgAxesTimeline.append("g")
-        .attr("class", "x axis-days")
-        .attr("transform", "translate(0," + timelineHeight + ")");
-        // .attr("stroke-dasharray", "2,2");
+    appendAxisGroup(svgAxesTimeline, "x axisMain", timelineHeight);
+    appendAxisGroup(svgAxesTimeline, "x axis-day-names", timelineHeight);
+    appendAxisGroup(svgAxesTimeline, "x axis-days", timelineHeight);
 
     updateTimeline();
 
     svgInnerTimeline = svgRootTimeline.append("svg")
-        // .attr("vector-effect", "non-scaling-stroke")
+        .attr("vector-effect", "non-scaling-stroke")
         .attr("width",  timelineWidth)
         .attr("height", timelineHeight)
         .attr("x", timelineMargin.left)
@@ -202,8 +162,6 @@ function drawTimeline(domElement, width) {
         .attr("class", "outertimelinebackground");
 
 }
-
-
 
 function setEventRectAttributes(selection) {
     return selection.attr("cy", timelineHeight/2)
