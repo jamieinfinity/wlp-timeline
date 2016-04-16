@@ -16,6 +16,7 @@ var svgAxesTimeline;
 
 var timelineXAxisMain;
 var timelineXAxisDays;
+var timelineXAxisWeeks;
 var timelineXAxisDayNames;
 var timelineXAxisHidden;
 
@@ -58,6 +59,7 @@ function setUpCommonTimeAxis(minDate, maxDate) {
     timelineXAxisMain = makeTimelineAxis(sharedTimeScale, customTimeFormat, "bottom", -timelineHeight, 6);
     timelineXAxisDayNames = makeTimelineAxis(sharedTimeScale, customTimeFormatDayNames, "bottom", -timelineHeight, 18);
     timelineXAxisDays = makeTimelineAxis(sharedTimeScale, "", "bottom", -timelineHeight, 0).ticks(d3.time.days, 1);
+    timelineXAxisWeeks = makeTimelineAxis(sharedTimeScale, "", "bottom", -timelineHeight, 0).ticks(d3.time.weeks, 1);
     timelineXAxisHidden = makeTimelineAxis(sharedTimeScale, "", "bottom", 0, 0).ticks(d3.time.years, 1);
 }
 
@@ -84,6 +86,7 @@ function updateTimeline() {
     resetTimeAxis(".x.axisMain", timelineXAxisMain, 0);
     resetTimeAxis(".x.axis-day-names", timelineXAxisDayNames, 60);
     resetTimeAxis(".x.axis-days", timelineXAxisDays, 60);
+    resetTimeAxis(".x.axis-weeks", timelineXAxisWeeks, 60);
 }
 
 function appendAxisGroup(selection, axisPath, yOffset) {
@@ -128,6 +131,7 @@ function drawTimeline(domElement, width) {
     appendAxisGroup(svgAxesTimeline, "x axisMain", timelineHeight);
     appendAxisGroup(svgAxesTimeline, "x axis-day-names", timelineHeight);
     appendAxisGroup(svgAxesTimeline, "x axis-days", timelineHeight);
+    appendAxisGroup(svgAxesTimeline, "x axis-weeks", timelineHeight);
 
     updateTimeline();
 
