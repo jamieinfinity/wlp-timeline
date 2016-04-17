@@ -1,23 +1,24 @@
 {
-  "name": "zoomabletimeline",
+  "name": "wlp-timeline",
   "version": "0.0.1",
-  "description": "A D3 plugin that is a zoomable timeline.",
+  "description": "One of several core WorldLine Project components that is an interactive zoomable timeline for fluidly exploring event data spanning orders of magnitude in timescales.",
   "author": "Jamie Williams",
   "license": "BSD-3-Clause",
   "keywords": [
     "D3",
-    "timeline"
+    "timeline",
+    "WorldLine Project"
   ],
-  "main": "build/timeline.js",
+  "main": "build/wlp-timeline.js",
   "jsnext:main": "index",
   "scripts": {
     "bundle": "node -e 'process.stdout.write(\"var version = \\\"\" + require(\"./package.json\").version + \"\\\";export * from \\\"../index\\\"; export {version};\");' > build/bundle.js",
-    "rollup": "rollup -f umd -u timeline -n timeline -o build/timeline.js -- build/bundle.js",
-    "css" : "cp src/css/timeline.css build/timeline.css",
+    "rollup": "rollup -f umd -u wlp-timeline -n wlp_timeline -o build/wlp-timeline.js -- build/bundle.js",
+    "css" : "cp src/css/timeline.css build/wlp-timeline.css",
     "pretest": "mkdir -p build && npm run bundle && npm run rollup && npm run css",
     "test": "faucet `find test -name '*-test.js'` && eslint index.js src/js",
-    "uglify": "uglifyjs build/timeline.js -c -m -o build/timeline.min.js",
-    "build": "rm -f build/timeline.zip && zip -j build/timeline.zip -- LICENSE README.md build/timeline.js build/timeline.css build/timeline.min.js",
+    "uglify": "uglifyjs build/wlp-timeline.js -c -m -o build/wlp-timeline.min.js",
+    "build": "rm -f build/wlp-timeline.zip && zip -j build/wlp-timeline.zip -- LICENSE README.md build/wlp-timeline.js build/wlp-timeline.css build/wlp-timeline.min.js",
     "prepublish": "npm run test && npm run uglify && npm run build",
     "css:watch": "watch 'npm run css' src/css/",
     "js:watch": "watch 'npm run pretest' src/js/",

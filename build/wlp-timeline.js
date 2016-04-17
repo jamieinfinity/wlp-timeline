@@ -1,7 +1,7 @@
 (function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
-    typeof define === 'function' && define.amd ? define('timeline', ['exports'], factory) :
-    (factory((global.timeline = {})));
+    typeof define === 'function' && define.amd ? define('wlp-timeline', ['exports'], factory) :
+    (factory((global.wlp_timeline = {})));
 }(this, function (exports) { 'use strict';
 
     var timelineMargin = {top: 20, right: 20, bottom: 30, left: 20};
