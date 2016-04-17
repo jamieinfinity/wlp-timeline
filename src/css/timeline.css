@@ -1,0 +1,25 @@
+
+
+.x text {
+    fill: #aaa;
+}
+.x path,
+.x line {
+    fill: none;
+    stroke-width: 1;
+    stroke: #eee;
+}
+.x.axis-day-names text {
+    fill: #ddd;
+}
+.x.axis-days path,
+.x.axis-days line {
+    stroke-width: 2;
+    stroke: #ccc;
+}
+.x.axis-weeks path,
+.x.axis-weeks line {
+    stroke-width: 2;
+    stroke: #888;
+}
+

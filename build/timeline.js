@@ -166,25 +166,11 @@
 
     }
 
-    // function setEventRectAttributes(selection) {
-    //     return selection.attr("cy", timelineHeight/2)
-    //         .attr("cx", function(d) {
-    //             return sharedTimeScale(d);
-    //         })
-    //         .attr("r", 5)
-    //         .attr("fill", "black");
-    // }
-    // function updatePoints() {
-    //     var points = setEventRectAttributes(pointsSelection.selectAll('circle').data(pointsData));
-    //     setEventRectAttributes(points.enter().append('circle'));
-    //     points.exit().remove();
-    // }
-
     // for static attributes that can be applied once
     function initPointAttributes(selection) {
         return selection
                 .attr("r", 5)
-                .attr("fill", "black");
+                .attr("fill", "#555");
     }
     // for attributes that can change and need to be applied every time
     function updatePointAttributes(selection) {
@@ -196,9 +182,9 @@
 
     function updatePoints() {
         var pointsDOMData = pointsSelection.selectAll('circle').data(pointsData);
-        initPointAttributes(pointsDOMData.enter().append('circle'));
-        updatePointAttributes(pointsDOMData);
-        pointsDOMData.exit().remove();
+        initPointAttributes(pointsDOMData.enter().append('circle')); // enter
+        updatePointAttributes(pointsDOMData); // update
+        pointsDOMData.exit().remove(); // exit
     }
 
     function addData(data) {

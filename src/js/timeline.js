@@ -171,7 +171,7 @@ function drawTimeline(domElement, width) {
 function initPointAttributes(selection) {
     return selection
             .attr("r", 5)
-            .attr("fill", "black");
+            .attr("fill", "#555");
 }
 // for attributes that can change and need to be applied every time
 function updatePointAttributes(selection) {

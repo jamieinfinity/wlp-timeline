@@ -11,21 +11,27 @@
   "main": "build/timeline.js",
   "jsnext:main": "index",
   "scripts": {
-    "dostuff": "node -e 'process.stdout.write(\"var version = \\\"\" + require(\"./package.json\").version + \"\\\";export * from \\\"../index\\\"; export {version};\");' > build/bundle.js",
+    "bundle": "node -e 'process.stdout.write(\"var version = \\\"\" + require(\"./package.json\").version + \"\\\";export * from \\\"../index\\\"; export {version};\");' > build/bundle.js",
     "rollup": "rollup -f umd -u timeline -n timeline -o build/timeline.js -- build/bundle.js",
-    "pretest": "mkdir -p build && npm run dostuff && npm run rollup",
-    "test": "faucet `find test -name '*-test.js'` && eslint index.js src",
+    "css" : "cp src/css/timeline.css build/timeline.css",
+    "pretest": "mkdir -p build && npm run bundle && npm run rollup && npm run css",
+    "test": "faucet `find test -name '*-test.js'` && eslint index.js src/js",
     "uglify": "uglifyjs build/timeline.js -c -m -o build/timeline.min.js",
-    "build": "rm -f build/timeline.zip && zip -j build/timeline.zip -- LICENSE README.mdbuild/timeline.js build/timeline.min.js",
-    "prepublish": "npm run test && npm run uglify && npm run build"
+    "build": "rm -f build/timeline.zip && zip -j build/timeline.zip -- LICENSE README.md build/timeline.js build/timeline.css build/timeline.min.js",
+    "prepublish": "npm run test && npm run uglify && npm run build",
+    "css:watch": "watch 'npm run css' src/css/",
+    "js:watch": "watch 'npm run pretest' src/js/",
+    "watch": "parallelshell 'npm run css:watch' 'npm run js:watch'"
   },
   "dependencies": {
     "d3": "^3.5.13"
   },
   "devDependencies": {
     "faucet": "0.0",
+    "parallelshell": "^2.0.0",
     "rollup": "0.25.0",
     "tape": "^4.4",
-    "uglify-js": "^2.6"
+    "uglify-js": "^2.6",
+    "watch": "^0.17.1"
   }
 }

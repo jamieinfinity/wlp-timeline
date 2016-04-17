@@ -1,1 +1,1 @@
-export {drawTimeline, addData} from "./src/timeline";
+export {drawTimeline, addData} from "./src/js/timeline";
