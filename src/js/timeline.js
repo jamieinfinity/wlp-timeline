@@ -3,7 +3,11 @@
 //import {d3} from "d3";
 
 
+import viewModel from "./viewModel";
+
 export {drawTimeline, addData};
+
+var model = viewModel();
 
 var timelineMargin = {top: 20, right: 20, bottom: 30, left: 20},
     timelineHeight = 70 - timelineMargin.top - timelineMargin.bottom;
@@ -63,6 +67,7 @@ function setUpCommonTimeAxis(minDate, maxDate) {
     timelineXAxisHidden = makeTimelineAxis(sharedTimeScale, "", "bottom", 0, 0).ticks(d3.time.years, 1);
 }
 
+// TODO: move this to viewModel, taking in args scale and width, then test it
 function timelineSpanInDays() {
     var minDate = sharedTimeScale.invert(0);
     var maxDate = sharedTimeScale.invert(timelineWidth);

@@ -4,6 +4,24 @@
     (factory((global.wlp_timeline = {})));
 }(this, function (exports) { 'use strict';
 
+    function viewModel() {
+
+        function timelineSpanInDays(timeScale, timelineWidth) {
+            return 0;
+        }
+
+        function nighttimeEvents(minDate, maxDate) {
+            return 0;
+        }
+
+        return {
+            timelineSpanInDays: timelineSpanInDays,
+            nighttimeEvents: nighttimeEvents
+        }
+    }
+
+    var model = viewModel();
+
     var timelineMargin = {top: 20, right: 20, bottom: 30, left: 20};
     var timelineHeight = 70 - timelineMargin.top - timelineMargin.bottom;
     var timelineWidth;
@@ -62,6 +80,7 @@
         timelineXAxisHidden = makeTimelineAxis(sharedTimeScale, "", "bottom", 0, 0).ticks(d3.time.years, 1);
     }
 
+    // TODO: move this to viewModel, taking in args scale and width, then test it
     function timelineSpanInDays() {
         var minDate = sharedTimeScale.invert(0);
         var maxDate = sharedTimeScale.invert(timelineWidth);
@@ -201,5 +220,6 @@
     exports.version = version;
     exports.drawTimeline = drawTimeline;
     exports.addData = addData;
+    exports.viewModel = viewModel;
 
 }));
