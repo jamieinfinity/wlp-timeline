@@ -238,6 +238,11 @@
         selection.attr("cy", timelineHeight/2)
             .attr("cx", function(d) {
                 return sharedTimeScale(d);
+            })
+            .on("click", function(d) {
+                var minDate = new Date(d.getTime() - 12*3600000);
+                var maxDate = new Date(d.getTime() + 12*3600000);
+                resetTimelineSpan([minDate, maxDate]);
             });
     }
 
@@ -258,10 +263,10 @@
 
         updatePoints();
 
-        animateTimelineToDateSpan(data, datespan);
+        resetTimelineSpan(datespan);
     }
 
-    function animateTimelineToDateSpan(data, datespan) {
+    function resetTimelineSpan(datespan) {
         d3.transition().duration(500).tween("zoom", function() {
             var ix = d3.interpolate(sharedTimeScale.domain(), datespan);
             return function(t) {
