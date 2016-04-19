@@ -30,6 +30,9 @@ var zoom;
 var pointsSelection;
 var pointsData;
 
+var nightData;
+var nightSelection;
+
 
 function makeTimeFormat(mil, sec, min, hr, day, day2, month, year) {
     return d3.time.format.multi([
@@ -83,6 +86,7 @@ function resetTimeAxis(axisPath, axisFunction, visibleMaxDays) {
 }
 
 function updateTimeline() {
+    updateNightRects();
 
     if(pointsData) {
         updatePoints();
@@ -99,6 +103,8 @@ function appendAxisGroup(selection, axisPath, yOffset) {
         .attr("class", axisPath)
         .attr("transform", "translate(0," + yOffset + ")");
 }
+
+
 
 function drawTimeline(domElement, width) {
 
@@ -138,7 +144,6 @@ function drawTimeline(domElement, width) {
     appendAxisGroup(svgAxesTimeline, "x axis-days", timelineHeight);
     appendAxisGroup(svgAxesTimeline, "x axis-weeks", timelineHeight);
 
-    updateTimeline();
 
     svgInnerTimeline = svgRootTimeline.append("svg")
         .attr("vector-effect", "non-scaling-stroke")
@@ -149,6 +154,10 @@ function drawTimeline(domElement, width) {
         .attr("viewBox", "0 0 " + timelineWidth + " " + timelineHeight)
         .call(zoom);
         // .call(tip);
+
+    nightData = model.nighttimeEvents(minDate, maxDate);
+    nightSelection = svgInnerTimeline.append('g');
+    updateTimeline();
 
     svgInnerTimeline.append("rect")
         .attr("fill", "white")
@@ -172,13 +181,42 @@ function drawTimeline(domElement, width) {
 
 }
 
-// for static attributes that can be applied once
+function initNightRectAttributes(selection) {
+    return selection
+        .attr("height", timelineHeight)
+        .attr("class", "nightrect");
+}
+function updateNightRectAttributes(selection) {
+    selection.attr("y", 0)
+        .attr("x", function(d) {
+            return sharedTimeScale(d.startTime);
+        })
+        .attr("width", function(d) {
+            return sharedTimeScale(d.endTime) - sharedTimeScale(d.startTime);
+        });
+
+}
+
+function updateNightRects() {
+    var data;
+    if (timelineSpanInDays() > 14) {
+        data = [];
+    } else {
+        data = nightData;
+    }
+    var rectsDOMData = nightSelection.selectAll('rect.nightrect').data(data);
+    initNightRectAttributes(rectsDOMData.enter().append('rect')); // enter
+    updateNightRectAttributes(rectsDOMData); // update
+    rectsDOMData.exit().remove(); // exit
+}
+
+
+
 function initPointAttributes(selection) {
     return selection
             .attr("r", 5)
             .attr("fill", "#555");
 }
-// for attributes that can change and need to be applied every time
 function updatePointAttributes(selection) {
     selection.attr("cy", timelineHeight/2)
         .attr("cx", function(d) {

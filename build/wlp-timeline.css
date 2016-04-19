@@ -23,3 +23,7 @@
     stroke: #888;
 }
 
+.nightrect {
+    fill: #0A1F34;
+    fill-opacity: 0.05;
+}
