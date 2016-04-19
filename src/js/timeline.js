@@ -110,8 +110,9 @@ function drawTimeline(domElement, width) {
 
     timelineWidth = width - timelineMargin.left - timelineMargin.right;
 
-    var minDate = new Date('Jan 1, 2016');
-    var maxDate = new Date();
+    var today = new Date();
+    var minDate = new Date(today.getTime() - 3600*24*1000);
+    var maxDate = new Date(today.getTime() + 3600*24*1000);
     setUpCommonTimeAxis(minDate, maxDate);
 
     zoom = d3.behavior.zoom()
@@ -238,4 +239,16 @@ function addData(data) {
 
     updatePoints();
 
+    animateTimelineToDateSpan(data);
+}
+
+function animateTimelineToDateSpan(data) {
+    d3.transition().duration(500).tween("zoom", function() {
+        var datespan = d3.extent(data);
+        var ix = d3.interpolate(sharedTimeScale.domain(), datespan);
+        return function(t) {
+            zoom.x(sharedTimeScale.domain(ix(t)));
+            updateTimeline();
+        };
+    });
 }
