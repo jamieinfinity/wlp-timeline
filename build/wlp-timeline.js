@@ -253,14 +253,16 @@
         pointsData = data;
         pointsSelection = svgInnerTimeline.append('g');
 
+        var datespan = d3.extent(data);
+        nightData = model.nighttimeEvents(datespan[0], datespan[1]);
+
         updatePoints();
 
-        animateTimelineToDateSpan(data);
+        animateTimelineToDateSpan(data, datespan);
     }
 
-    function animateTimelineToDateSpan(data) {
+    function animateTimelineToDateSpan(data, datespan) {
         d3.transition().duration(500).tween("zoom", function() {
-            var datespan = d3.extent(data);
             var ix = d3.interpolate(sharedTimeScale.domain(), datespan);
             return function(t) {
                 zoom.x(sharedTimeScale.domain(ix(t)));
