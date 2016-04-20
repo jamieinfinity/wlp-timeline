@@ -1,6 +1,8 @@
 /*global d3*/
+/*global d3_tip*/
 
 //import {d3} from "d3";
+//import {d3_tip} from "d3-tip";
 
 
 import viewModel from "./viewModel";
@@ -33,6 +35,7 @@ var pointsData;
 var nightData;
 var nightSelection;
 
+var prettyDateFormat = d3.time.format("%a %b %e, %Y at %_I:%M %p");
 
 function makeTimeFormat(mil, sec, min, hr, day, day2, month, year) {
     return d3.time.format.multi([
@@ -55,6 +58,30 @@ function makeTimelineAxis(scale, format, orient, size, padding) {
         .tickSize(size)
         .tickPadding(padding);
 }
+
+function makeTooltipHtmlRowSingleColumn(label, text, redbackground) {
+    var cellstyle = redbackground ? 'style="color:#fff; background-color: rgba(255, 0, 0, 0.7);"' : 'style="color:#fff;"';
+    var labelcolon = label=='' ? '' : ':';
+    return '<tr>' +
+        '<td>' + label + labelcolon + '</td>' +
+        '<td colspan="4" class="tabcol1"' + cellstyle + '>' + text + '</td>' +
+        '</tr>';
+}
+
+
+
+var pointTooltip = d3.tip()
+    .attr('class', 'd3-tip')
+    .offset([-7, 0])
+    // .direction(function(d) {
+    //     return 's';
+    // })
+    .html(function(d) {
+        return  '' +
+           '<table class="tooltiptable">' +
+                makeTooltipHtmlRowSingleColumn('time', prettyDateFormat(d), false) +
+            '</table>';
+    });
 
 function setUpCommonTimeAxis(minDate, maxDate) {
 
@@ -153,8 +180,8 @@ function drawTimeline(domElement, width) {
         .attr("x", timelineMargin.left)
         .attr("y", timelineMargin.top/2)
         .attr("viewBox", "0 0 " + timelineWidth + " " + timelineHeight)
-        .call(zoom);
-        // .call(tip);
+        .call(zoom)
+        .call(pointTooltip);
 
     nightData = model.nighttimeEvents(minDate, maxDate);
     nightSelection = svgInnerTimeline.append('g');
@@ -215,6 +242,9 @@ function updateNightRects() {
 
 function initPointAttributes(selection) {
     return selection
+            .on('mouseover', function(d) {
+                return pointTooltip.show(d)
+            })
             .attr("r", 5)
             .attr("fill", "#555");
 }
@@ -222,6 +252,12 @@ function updatePointAttributes(selection) {
     selection.attr("cy", timelineHeight/2)
         .attr("cx", function(d) {
             return sharedTimeScale(d);
+        })
+        .on('mouseover', function(d) {
+            return pointTooltip.show(d)
+        })
+        .on('mouseleave', function(d) {
+            return pointTooltip.hide(d)
         })
         .on("click", function(d) {
             var minDate = new Date(d.getTime() - 12*3600000);

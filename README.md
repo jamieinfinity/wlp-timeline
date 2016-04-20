@@ -1,6 +1,6 @@
 # wlp-timeline
 
-One of several core WorldLine Project components that is an interactive zoomable timeline for fluidly exploring event data spanning orders of magnitude in timescales.
+One of several core D3-based WorldLine Project components that is an interactive zoomable timeline for fluidly exploring event data spanning orders of magnitude in timescales.
 
 ## Installing
 

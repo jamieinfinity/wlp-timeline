@@ -13,8 +13,8 @@
   "jsnext:main": "index",
   "scripts": {
     "bundle": "node -e 'process.stdout.write(\"var version = \\\"\" + require(\"./package.json\").version + \"\\\";export * from \\\"../index\\\"; export {version};\");' > build/bundle.js",
-    "rollup": "rollup -f umd -u wlp-timeline -n wlp_timeline -o build/wlp-timeline.js -- build/bundle.js",
-    "css" : "cp src/css/timeline.css build/wlp-timeline.css",
+    "rollup": "rollup -f umd -g d3-tip:d3_tip -n wlp_timeline -o build/wlp-timeline.js -- build/bundle.js",
+    "css": "cp src/css/timeline.css build/wlp-timeline.css",
     "pretest": "mkdir -p build && npm run bundle && npm run rollup && npm run css",
     "test": "faucet `find test -name '*-test.js'` && eslint index.js src/js",
     "uglify": "uglifyjs build/wlp-timeline.js -c -m -o build/wlp-timeline.min.js",
@@ -25,7 +25,8 @@
     "watch": "parallelshell 'npm run css:watch' 'npm run js:watch'"
   },
   "dependencies": {
-    "d3": "^3.5.13"
+    "d3": "^3.5.13",
+    "d3-tip": "^0.6.7"
   },
   "devDependencies": {
     "faucet": "0.0",
