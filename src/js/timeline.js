@@ -7,7 +7,10 @@
 
 import viewModel from "./viewModel";
 
-export {drawTimeline, addData};
+export {drawTimeline, addData, resizeTimeline};
+
+// TODO: migrate to const & let where possible
+// TODO: try to move as many global vars below to local
 
 var model = viewModel();
 
@@ -97,11 +100,15 @@ function setUpCommonTimeAxis(minDate, maxDate) {
     timelineXAxisHidden = makeTimelineAxis(sharedTimeScale, "", "bottom", 0, 0).ticks(d3.time.years, 1);
 }
 
-// TODO: move this to viewModel, taking in args scale and width, then test it
-function timelineSpanInDays() {
+// TODO: move these to viewModel
+function timelineExtentDates() {
     var minDate = sharedTimeScale.invert(0);
     var maxDate = sharedTimeScale.invert(timelineWidth);
-    return (maxDate.getTime() - minDate.getTime())/1000/3600/24;
+    return [minDate, maxDate];
+}
+function timelineSpanInDays() {
+    let dates = timelineExtentDates();
+    return (dates[1].getTime() - dates[0].getTime())/1000/3600/24;
 }
 
 function resetTimeAxis(axisPath, axisFunction, visibleMaxDays) {
@@ -188,8 +195,6 @@ function drawTimeline(domElement, width) {
     updateTimeline();
 
     svgInnerTimeline.append("rect")
-        .attr("fill", "white")
-        .attr("fill-opacity", 0)
         .attr("width", timelineWidth)
         .attr("height", timelineHeight)
         .attr("class", "innertimelinebackground");
@@ -199,12 +204,8 @@ function drawTimeline(domElement, width) {
         .attr("transform", "translate(" + timelineMargin.left + "," + timelineMargin.top/2 + ")");
 
     svgOuterTimeline.append("rect")
-        .attr("fill", "white")
-        .attr("fill-opacity", 0.0)
         .attr("width", timelineWidth)
         .attr("height", timelineHeight)
-        .attr("stroke", "#eee")
-        .attr("stroke-width", 3)
         .attr("class", "outertimelinebackground");
 
 }
@@ -294,4 +295,47 @@ function resetTimelineSpan(datespan) {
             updateTimeline();
         };
     });
+}
+
+
+
+function resizeTimeline(width) {
+    // TODO: most of this is duplicated in drawTimeline...try to pull out sharable code
+
+    timelineWidth = width - timelineMargin.left - timelineMargin.right;
+
+    svgRootTimeline
+        .attr("width", timelineWidth + timelineMargin.left + timelineMargin.right);
+    svgInnerTimeline
+        .attr("width", timelineWidth)
+        .attr("viewBox", "0 0 " + timelineWidth + " " + timelineHeight);
+    svgInnerTimeline.select(".innertimelinebackground")
+        .attr("width", timelineWidth);
+    svgOuterTimeline
+        .attr("width", timelineWidth)
+        .attr("viewBox", "0 0 " + timelineWidth + " " + timelineHeight);
+    svgOuterTimeline.select(".outertimelinebackground")
+        .attr("width", timelineWidth);
+    svgAxesTimeline
+        .attr("width", timelineWidth)
+        .attr("viewBox", "0 0 " + timelineWidth + " " + timelineHeight);
+
+    let minmax = timelineExtentDates();
+    sharedTimeScale = d3.time.scale().domain(minmax).range([0, timelineWidth]);
+
+    timelineXAxisMain.scale(sharedTimeScale);
+    timelineXAxisDays.scale(sharedTimeScale);
+    timelineXAxisWeeks.scale(sharedTimeScale);
+    timelineXAxisDayNames.scale(sharedTimeScale);
+    timelineXAxisHidden.scale(sharedTimeScale);
+
+    zoom = d3.behavior.zoom()
+        .x(sharedTimeScale)
+        .scaleExtent([-3000, 3000])
+        .on("zoom", function() {
+            updateTimeline();
+        });
+    svgInnerTimeline.call(zoom);
+
+    updateTimeline();
 }

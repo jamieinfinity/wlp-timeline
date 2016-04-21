@@ -7,7 +7,7 @@
 .x line {
     fill: none;
     stroke-width: 1;
-    stroke: #eee;
+    stroke: #ddd;
 }
 .x.axis-day-names text {
     fill: #ddd;
@@ -21,6 +21,18 @@
 .x.axis-weeks line {
     stroke-width: 2;
     stroke: #888;
+}
+
+.innertimelinebackground {
+    fill: white;
+    fill-opacity: 0;
+}
+
+.outertimelinebackground {
+    fill: white;
+    fill-opacity: 0;
+    stroke: #ddd;
+    stroke-width: 3;
 }
 
 .nightrect {
@@ -45,7 +57,7 @@ table.tooltiptable {
 .d3-tip {
     line-height: .8;
     padding: 8px;
-    font-family: Arial;
+    font-family: Avenir;
     font-size: 12px;
     background: rgba(40, 40, 40, 0.65);
     color: #bbb;
