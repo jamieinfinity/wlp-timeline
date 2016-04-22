@@ -9,36 +9,26 @@ import viewModel from "./viewModel";
 
 export {drawTimeline, addData, resizeTimeline};
 
-// TODO: migrate to const & let where possible
-// TODO: try to move as many global vars below to local
 
-var model = viewModel();
+const model = viewModel();
 
-var timelineMargin = {top: 20, right: 20, bottom: 30, left: 20},
-    timelineHeight = 70 - timelineMargin.top - timelineMargin.bottom;
-var timelineWidth;
+const timelineMargin = {top: 20, right: 20, bottom: 30, left: 20};
+const timelineSize = {height: 70 - timelineMargin.top - timelineMargin.bottom,
+                      width: 0};
+const prettyDateFormat = d3.time.format("%a %b %e, %Y at %_I:%M %p");
 
-var svgRootTimeline;
-var svgInnerTimeline;
-var svgOuterTimeline;
-var svgAxesTimeline;
+let sharedTimeScale;
+let zoom;
 
-var timelineXAxisMain;
-var timelineXAxisDays;
-var timelineXAxisWeeks;
-var timelineXAxisDayNames;
-var timelineXAxisHidden;
+let pointsData;
+let nightData;
 
-var sharedTimeScale;
-var zoom;
+let timelineXAxisMain;
+let timelineXAxisDays;
+let timelineXAxisWeeks;
+let timelineXAxisDayNames;
+let timelineXAxisHidden;
 
-var pointsSelection;
-var pointsData;
-
-var nightData;
-var nightSelection;
-
-var prettyDateFormat = d3.time.format("%a %b %e, %Y at %_I:%M %p");
 
 function makeTimeFormat(mil, sec, min, hr, day, day2, month, year) {
     return d3.time.format.multi([
@@ -88,22 +78,22 @@ var pointTooltip = d3.tip()
 
 function setUpCommonTimeAxis(minDate, maxDate) {
 
-    sharedTimeScale = d3.time.scale().domain([minDate, maxDate]).range([0, timelineWidth]);
+    sharedTimeScale = d3.time.scale().domain([minDate, maxDate]).range([0, timelineSize.width]);
 
     var customTimeFormat = makeTimeFormat(".%L", ":%S", "%_I:%M", "%_I %p", "%b %-d", "%b %-d", "%b", "%Y");
     var customTimeFormatDayNames = makeTimeFormat(" ", " ", " ", " ", "%a", "%a", "%a", " ");
 
-    timelineXAxisMain = makeTimelineAxis(sharedTimeScale, customTimeFormat, "bottom", -timelineHeight, 6);
-    timelineXAxisDayNames = makeTimelineAxis(sharedTimeScale, customTimeFormatDayNames, "bottom", -timelineHeight, 18);
-    timelineXAxisDays = makeTimelineAxis(sharedTimeScale, "", "bottom", -timelineHeight, 0).ticks(d3.time.days, 1);
-    timelineXAxisWeeks = makeTimelineAxis(sharedTimeScale, "", "bottom", -timelineHeight, 0).ticks(d3.time.weeks, 1);
+    timelineXAxisMain = makeTimelineAxis(sharedTimeScale, customTimeFormat, "bottom", -timelineSize.height, 6);
+    timelineXAxisDayNames = makeTimelineAxis(sharedTimeScale, customTimeFormatDayNames, "bottom", -timelineSize.height, 18);
+    timelineXAxisDays = makeTimelineAxis(sharedTimeScale, "", "bottom", -timelineSize.height, 0).ticks(d3.time.days, 1);
+    timelineXAxisWeeks = makeTimelineAxis(sharedTimeScale, "", "bottom", -timelineSize.height, 0).ticks(d3.time.weeks, 1);
     timelineXAxisHidden = makeTimelineAxis(sharedTimeScale, "", "bottom", 0, 0).ticks(d3.time.years, 1);
 }
 
 // TODO: move these to viewModel
 function timelineExtentDates() {
     var minDate = sharedTimeScale.invert(0);
-    var maxDate = sharedTimeScale.invert(timelineWidth);
+    var maxDate = sharedTimeScale.invert(timelineSize.width);
     return [minDate, maxDate];
 }
 function timelineSpanInDays() {
@@ -112,6 +102,7 @@ function timelineSpanInDays() {
 }
 
 function resetTimeAxis(axisPath, axisFunction, visibleMaxDays) {
+    let svgAxesTimeline = d3.select('#timelineAxes');
     if (visibleMaxDays > 0 && timelineSpanInDays() > visibleMaxDays) {
         svgAxesTimeline.select(axisPath).call(timelineXAxisHidden);
     } else {
@@ -142,7 +133,7 @@ function appendAxisGroup(selection, axisPath, yOffset) {
 
 function drawTimeline(domElement, width) {
 
-    timelineWidth = width - timelineMargin.left - timelineMargin.right;
+    timelineSize.width = width - timelineMargin.left - timelineMargin.right;
 
     var today = new Date();
     var minDate = new Date(today.getTime() - 3600*24*1000);
@@ -166,53 +157,57 @@ function drawTimeline(domElement, width) {
         .style("right", rootMargin+"px")
         .style("position", "absolute");
 
-    svgRootTimeline = d3.select(domElement).append("svg")
-        .attr("width", timelineWidth + timelineMargin.left + timelineMargin.right)
-        .attr("height", timelineHeight + timelineMargin.top/2 + timelineMargin.bottom);
+    let svgRootTimeline = d3.select(domElement).append("svg")
+        .attr("class", "timelineRoot")
+        .attr("width", timelineSize.width + timelineMargin.left + timelineMargin.right)
+        .attr("height", timelineSize.height + timelineMargin.top/2 + timelineMargin.bottom);
 
-    svgAxesTimeline = svgRootTimeline.append("g")
+    let svgAxesTimeline = svgRootTimeline.append("g")
+        .attr("id", "timelineAxes")
         .attr("pointer-events", "none")
         .attr("transform", "translate(" + timelineMargin.left + "," + timelineMargin.top/2 + ")");
 
-    appendAxisGroup(svgAxesTimeline, "x axisMain", timelineHeight);
-    appendAxisGroup(svgAxesTimeline, "x axis-day-names", timelineHeight);
-    appendAxisGroup(svgAxesTimeline, "x axis-days", timelineHeight);
-    appendAxisGroup(svgAxesTimeline, "x axis-weeks", timelineHeight);
+    appendAxisGroup(svgAxesTimeline, "x axisMain", timelineSize.height);
+    appendAxisGroup(svgAxesTimeline, "x axis-day-names", timelineSize.height);
+    appendAxisGroup(svgAxesTimeline, "x axis-days", timelineSize.height);
+    appendAxisGroup(svgAxesTimeline, "x axis-weeks", timelineSize.height);
 
 
-    svgInnerTimeline = svgRootTimeline.append("svg")
+    let svgInnerTimeline = svgRootTimeline.append("svg")
+        .attr("id", "timelineInner")
         .attr("vector-effect", "non-scaling-stroke")
-        .attr("width",  timelineWidth)
-        .attr("height", timelineHeight)
+        .attr("width",  timelineSize.width)
+        .attr("height", timelineSize.height)
         .attr("x", timelineMargin.left)
         .attr("y", timelineMargin.top/2)
-        .attr("viewBox", "0 0 " + timelineWidth + " " + timelineHeight)
+        .attr("viewBox", "0 0 " + timelineSize.width + " " + timelineSize.height)
         .call(zoom)
         .call(pointTooltip);
 
     nightData = model.nighttimeEvents(minDate, maxDate);
-    nightSelection = svgInnerTimeline.append('g');
+    svgInnerTimeline.append('g').attr('id', 'nighttimeEventGroup');
     updateTimeline();
 
     svgInnerTimeline.append("rect")
-        .attr("width", timelineWidth)
-        .attr("height", timelineHeight)
-        .attr("class", "innertimelinebackground");
+        .attr("id", "innertimelinebackground")
+        .attr("width", timelineSize.width)
+        .attr("height", timelineSize.height);
 
-    svgOuterTimeline = svgRootTimeline.append("g")
+    let svgOuterTimeline = svgRootTimeline.append("g")
+        .attr("id", "timelineOuter")
         .attr("pointer-events", "none")
         .attr("transform", "translate(" + timelineMargin.left + "," + timelineMargin.top/2 + ")");
 
     svgOuterTimeline.append("rect")
-        .attr("width", timelineWidth)
-        .attr("height", timelineHeight)
-        .attr("class", "outertimelinebackground");
+        .attr("id", "outertimelinebackground")
+        .attr("width", timelineSize.width)
+        .attr("height", timelineSize.height);
 
 }
 
 function initNightRectAttributes(selection) {
     return selection
-        .attr("height", timelineHeight)
+        .attr("height", timelineSize.height)
         .attr("class", "nightrect");
 }
 function updateNightRectAttributes(selection) {
@@ -233,7 +228,7 @@ function updateNightRects() {
     } else {
         data = nightData;
     }
-    var rectsDOMData = nightSelection.selectAll('rect.nightrect').data(data);
+    var rectsDOMData = d3.select('#nighttimeEventGroup').selectAll('rect.nightrect').data(data);
     initNightRectAttributes(rectsDOMData.enter().append('rect')); // enter
     updateNightRectAttributes(rectsDOMData); // update
     rectsDOMData.exit().remove(); // exit
@@ -250,7 +245,7 @@ function initPointAttributes(selection) {
             .attr("fill", "#555");
 }
 function updatePointAttributes(selection) {
-    selection.attr("cy", timelineHeight/2)
+    selection.attr("cy", timelineSize.height/2)
         .attr("cx", function(d) {
             return sharedTimeScale(d);
         })
@@ -268,7 +263,7 @@ function updatePointAttributes(selection) {
 }
 
 function updatePoints() {
-    var pointsDOMData = pointsSelection.selectAll('circle').data(pointsData);
+    var pointsDOMData = d3.select('#eventPointGroup').selectAll('circle').data(pointsData);
     initPointAttributes(pointsDOMData.enter().append('circle')); // enter
     updatePointAttributes(pointsDOMData); // update
     pointsDOMData.exit().remove(); // exit
@@ -277,7 +272,7 @@ function updatePoints() {
 function addData(data) {
 
     pointsData = data;
-    pointsSelection = svgInnerTimeline.append('g');
+    d3.select('#timelineInner').append('g').attr('id', 'eventPointGroup');
 
     var datespan = d3.extent(data);
     nightData = model.nighttimeEvents(datespan[0], datespan[1]);
@@ -302,26 +297,26 @@ function resetTimelineSpan(datespan) {
 function resizeTimeline(width) {
     // TODO: most of this is duplicated in drawTimeline...try to pull out sharable code
 
-    timelineWidth = width - timelineMargin.left - timelineMargin.right;
+    timelineSize.width = width - timelineMargin.left - timelineMargin.right;
 
-    svgRootTimeline
-        .attr("width", timelineWidth + timelineMargin.left + timelineMargin.right);
-    svgInnerTimeline
-        .attr("width", timelineWidth)
-        .attr("viewBox", "0 0 " + timelineWidth + " " + timelineHeight);
-    svgInnerTimeline.select(".innertimelinebackground")
-        .attr("width", timelineWidth);
-    svgOuterTimeline
-        .attr("width", timelineWidth)
-        .attr("viewBox", "0 0 " + timelineWidth + " " + timelineHeight);
-    svgOuterTimeline.select(".outertimelinebackground")
-        .attr("width", timelineWidth);
-    svgAxesTimeline
-        .attr("width", timelineWidth)
-        .attr("viewBox", "0 0 " + timelineWidth + " " + timelineHeight);
+    d3.select('svg.timelineRoot')
+        .attr("width", timelineSize.width + timelineMargin.left + timelineMargin.right);
+    let svgInnerTimeline = d3.select('#timelineInner')
+        .attr("width", timelineSize.width)
+        .attr("viewBox", "0 0 " + timelineSize.width + " " + timelineSize.height);
+    svgInnerTimeline.select("#innertimelinebackground")
+        .attr("width", timelineSize.width);
+    let svgOuterTimeline = d3.select("#timelineOuter")
+        .attr("width", timelineSize.width)
+        .attr("viewBox", "0 0 " + timelineSize.width + " " + timelineSize.height);
+    svgOuterTimeline.select("#outertimelinebackground")
+        .attr("width", timelineSize.width);
+    d3.select('#timelineAxes')
+        .attr("width", timelineSize.width)
+        .attr("viewBox", "0 0 " + timelineSize.width + " " + timelineSize.height);
 
     let minmax = timelineExtentDates();
-    sharedTimeScale = d3.time.scale().domain(minmax).range([0, timelineWidth]);
+    sharedTimeScale.domain(minmax).range([0, timelineSize.width]);
 
     timelineXAxisMain.scale(sharedTimeScale);
     timelineXAxisDays.scale(sharedTimeScale);
