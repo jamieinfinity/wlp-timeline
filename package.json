@@ -1,6 +1,6 @@
 {
   "name": "wlp-timeline",
-  "version": "0.0.1",
+  "version": "0.0.23",
   "description": "One of several core D3-based WorldLine Project components that is an interactive zoomable timeline for fluidly exploring event data spanning orders of magnitude in timescales.",
   "author": "Jamie Williams",
   "license": "BSD-3-Clause",
@@ -12,6 +12,7 @@
   "main": "build/wlp-timeline.js",
   "jsnext:main": "index",
   "scripts": {
+    "bump": "npm --no-git-tag-version version patch",
     "bundle": "node -e 'process.stdout.write(\"var version = \\\"\" + require(\"./package.json\").version + \"\\\";export * from \\\"../index\\\"; export {version};\");' > build/bundle.js",
     "rollup": "rollup -f umd -g d3-tip:d3_tip -n wlp_timeline -o build/wlp-timeline.js -- build/bundle.js",
     "css": "cp src/css/timeline.css build/wlp-timeline.css",
@@ -34,6 +35,7 @@
     "rollup": "0.25.0",
     "tape": "^4.4",
     "uglify-js": "^2.6",
-    "watch": "^0.17.1"
+    "watch": "^0.17.1",
+    "license-checker": "^5.1.2"
   }
 }
