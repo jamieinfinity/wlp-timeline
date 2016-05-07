@@ -1,6 +1,6 @@
 {
   "name": "wlp-timeline",
-  "version": "0.0.23",
+  "version": "0.0.24",
   "description": "One of several core D3-based WorldLine Project components that is an interactive zoomable timeline for fluidly exploring event data spanning orders of magnitude in timescales.",
   "author": "Jamie Williams",
   "license": "BSD-3-Clause",
