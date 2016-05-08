@@ -1,8 +1,10 @@
 (function (global, factory) {
-    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
-    typeof define === 'function' && define.amd ? define(['exports'], factory) :
-    (factory((global.wlp_timeline = {})));
-}(this, function (exports) { 'use strict';
+    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('d3'), require('d3-tip')) :
+    typeof define === 'function' && define.amd ? define(['exports', 'd3', 'd3-tip'], factory) :
+    (factory((global.wlp_timeline = {}),global.d3,global.d3.tip));
+}(this, function (exports,d3,d3Tip) { 'use strict';
+
+    d3 = 'default' in d3 ? d3['default'] : d3;
 
     function viewModel() {
 
@@ -41,7 +43,9 @@
     let timelineXAxisDayNames;
     let timelineXAxisHidden;
 
+    let prettyDateFormat = d3.time.format("%a %b %e, %Y at %_I:%M %p");
     let pointTooltip;
+
 
     function makeTimeFormat(mil, sec, min, hr, day, day2, month, year) {
         return d3.time.format.multi([
@@ -138,7 +142,6 @@
             //     return 's';
             // })
             .html(function(d) {
-                let prettyDateFormat = d3.time.format("%a %b %e, %Y at %_I:%M %p");
                 return  '' +
                    '<table class="tooltiptable">' +
                         makeTooltipHtmlRowSingleColumn('time', prettyDateFormat(d), false) +

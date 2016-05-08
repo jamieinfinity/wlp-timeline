@@ -1,11 +1,10 @@
 /*global d3*/
 /*global d3_tip*/
 
-//import {d3} from "d3";
-//import {d3_tip} from "d3-tip";
-
 
 import viewModel from "./viewModel";
+import d3 from "d3";
+import d3Tip from "d3-tip";
 
 export {drawTimeline, addData, resizeTimeline};
 
@@ -28,7 +27,9 @@ let timelineXAxisWeeks;
 let timelineXAxisDayNames;
 let timelineXAxisHidden;
 
+let prettyDateFormat = d3.time.format("%a %b %e, %Y at %_I:%M %p");
 let pointTooltip;
+
 
 function makeTimeFormat(mil, sec, min, hr, day, day2, month, year) {
     return d3.time.format.multi([
@@ -125,7 +126,6 @@ function drawTimeline(domElement, width) {
         //     return 's';
         // })
         .html(function(d) {
-            let prettyDateFormat = d3.time.format("%a %b %e, %Y at %_I:%M %p");
             return  '' +
                '<table class="tooltiptable">' +
                     makeTooltipHtmlRowSingleColumn('time', prettyDateFormat(d), false) +
