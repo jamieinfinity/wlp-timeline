@@ -19,7 +19,6 @@ let sharedTimeScale;
 let zoom;
 
 let pointsData;
-let nightData;
 
 let timelineXAxisMain;
 let timelineXAxisDays;
@@ -76,7 +75,6 @@ function setUpCommonTimeAxis(minDate, maxDate) {
     timelineXAxisHidden = makeTimelineAxis(sharedTimeScale, "", "bottom", 0, 0).ticks(d3.time.years, 1);
 }
 
-// TODO: move these to viewModel
 function timelineExtentDates() {
     var minDate = sharedTimeScale.invert(0);
     var maxDate = sharedTimeScale.invert(timelineSize.width);
@@ -97,7 +95,6 @@ function resetTimeAxis(axisPath, axisFunction, visibleMaxDays) {
 }
 
 function updateTimeline() {
-    updateNightRects();
 
     if(pointsData) {
         updatePoints();
@@ -183,10 +180,6 @@ function drawTimeline(domElement, width) {
         .call(zoom)
         .call(pointTooltip);
 
-    nightData = model.nighttimeEvents(minDate, maxDate);
-    svgInnerTimeline.append('g').attr('id', 'nighttimeEventGroup');
-    updateTimeline();
-
     svgInnerTimeline.append("rect")
         .attr("id", "innertimelinebackground")
         .attr("width", timelineSize.width)
@@ -203,36 +196,6 @@ function drawTimeline(domElement, width) {
         .attr("height", timelineSize.height);
 
 }
-
-function initNightRectAttributes(selection) {
-    return selection
-        .attr("height", timelineSize.height)
-        .attr("class", "nightrect");
-}
-function updateNightRectAttributes(selection) {
-    selection.attr("y", 0)
-        .attr("x", function(d) {
-            return sharedTimeScale(d.startTime);
-        })
-        .attr("width", function(d) {
-            return sharedTimeScale(d.endTime) - sharedTimeScale(d.startTime);
-        });
-
-}
-
-function updateNightRects() {
-    var data;
-    if (timelineSpanInDays() > 14) {
-        data = [];
-    } else {
-        data = nightData;
-    }
-    var rectsDOMData = d3.select('#nighttimeEventGroup').selectAll('rect.nightrect').data(data);
-    initNightRectAttributes(rectsDOMData.enter().append('rect')); // enter
-    updateNightRectAttributes(rectsDOMData); // update
-    rectsDOMData.exit().remove(); // exit
-}
-
 
 
 function initPointAttributes(selection) {
@@ -274,7 +237,6 @@ function addData(data) {
     d3.select('#timelineInner').append('g').attr('id', 'eventPointGroup');
 
     var datespan = d3.extent(data);
-    nightData = model.nighttimeEvents(datespan[0], datespan[1]);
 
     updatePoints();
 
