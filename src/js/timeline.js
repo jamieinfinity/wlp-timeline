@@ -15,7 +15,6 @@ const model = viewModel();
 const timelineMargin = {top: 20, right: 20, bottom: 30, left: 20};
 const timelineSize = {height: 70 - timelineMargin.top - timelineMargin.bottom,
                       width: 0};
-const prettyDateFormat = d3.time.format("%a %b %e, %Y at %_I:%M %p");
 
 let sharedTimeScale;
 let zoom;
@@ -29,6 +28,7 @@ let timelineXAxisWeeks;
 let timelineXAxisDayNames;
 let timelineXAxisHidden;
 
+let pointTooltip;
 
 function makeTimeFormat(mil, sec, min, hr, day, day2, month, year) {
     return d3.time.format.multi([
@@ -60,21 +60,6 @@ function makeTooltipHtmlRowSingleColumn(label, text, redbackground) {
         '<td colspan="4" class="tabcol1"' + cellstyle + '>' + text + '</td>' +
         '</tr>';
 }
-
-
-
-var pointTooltip = d3.tip()
-    .attr('class', 'd3-tip')
-    .offset([-7, 0])
-    // .direction(function(d) {
-    //     return 's';
-    // })
-    .html(function(d) {
-        return  '' +
-           '<table class="tooltiptable">' +
-                makeTooltipHtmlRowSingleColumn('time', prettyDateFormat(d), false) +
-            '</table>';
-    });
 
 function setUpCommonTimeAxis(minDate, maxDate) {
 
@@ -132,6 +117,20 @@ function appendAxisGroup(selection, axisPath, yOffset) {
 
 
 function drawTimeline(domElement, width) {
+
+    pointTooltip = d3.tip()
+        .attr('class', 'd3-tip')
+        .offset([-7, 0])
+        // .direction(function(d) {
+        //     return 's';
+        // })
+        .html(function(d) {
+            let prettyDateFormat = d3.time.format("%a %b %e, %Y at %_I:%M %p");
+            return  '' +
+               '<table class="tooltiptable">' +
+                    makeTooltipHtmlRowSingleColumn('time', prettyDateFormat(d), false) +
+                '</table>';
+    });
 
     timelineSize.width = width - timelineMargin.left - timelineMargin.right;
 
