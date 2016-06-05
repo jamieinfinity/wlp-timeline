@@ -53,8 +53,8 @@ function makeTimelineAxis(scale, format, orient, size, padding) {
 }
 
 function makeTooltipHtmlRowSingleColumn(label, text, redbackground) {
-    var cellstyle = redbackground ? 'style="color:#fff; background-color: rgba(255, 0, 0, 0.7);"' : 'style="color:#fff;"';
-    var labelcolon = label=='' ? '' : ':';
+    let cellstyle = redbackground ? 'style="color:#fff; background-color: rgba(255, 0, 0, 0.7);"' : 'style="color:#fff;"';
+    let labelcolon = label=='' ? '' : ':';
     return '<tr>' +
         '<td>' + label + labelcolon + '</td>' +
         '<td colspan="4" class="tabcol1"' + cellstyle + '>' + text + '</td>' +
@@ -65,8 +65,8 @@ function setUpCommonTimeAxis(minDate, maxDate) {
 
     sharedTimeScale = d3.time.scale().domain([minDate, maxDate]).range([0, timelineSize.width]);
 
-    var customTimeFormat = makeTimeFormat(".%L", ":%S", "%_I:%M", "%_I %p", "%b %-d", "%b %-d", "%b", "%Y");
-    var customTimeFormatDayNames = makeTimeFormat(" ", " ", " ", " ", "%a", "%a", "%a", " ");
+    let customTimeFormat = makeTimeFormat(".%L", ":%S", "%_I:%M", "%_I %p", "%b %-d", "%b %-d", "%b", "%Y");
+    let customTimeFormatDayNames = makeTimeFormat(" ", " ", " ", " ", "%a", "%a", "%a", " ");
 
     timelineXAxisMain = makeTimelineAxis(sharedTimeScale, customTimeFormat, "bottom", -timelineSize.height, 6);
     timelineXAxisDayNames = makeTimelineAxis(sharedTimeScale, customTimeFormatDayNames, "bottom", -timelineSize.height, 18);
@@ -76,8 +76,8 @@ function setUpCommonTimeAxis(minDate, maxDate) {
 }
 
 function timelineExtentDates() {
-    var minDate = sharedTimeScale.invert(0);
-    var maxDate = sharedTimeScale.invert(timelineSize.width);
+    let minDate = sharedTimeScale.invert(0);
+    let maxDate = sharedTimeScale.invert(timelineSize.width);
     return [minDate, maxDate];
 }
 function timelineSpanInDays() {
@@ -131,9 +131,9 @@ function drawTimeline(domElement, width) {
 
     timelineSize.width = width - timelineMargin.left - timelineMargin.right;
 
-    var today = new Date();
-    var minDate = new Date(today.getTime() - 3600*24*1000);
-    var maxDate = new Date(today.getTime() + 3600*24*1000);
+    let today = new Date();
+    let minDate = new Date(today.getTime() - 3600*24*1000);
+    let maxDate = new Date(today.getTime() + 3600*24*1000);
     setUpCommonTimeAxis(minDate, maxDate);
 
     zoom = d3.behavior.zoom()
@@ -143,7 +143,7 @@ function drawTimeline(domElement, width) {
             updateTimeline();
         });
 
-    var rootMargin = 20;
+    let rootMargin = 20;
     d3.select(domElement)
         .style("font-family", "Avenir")
         .style("font-size", "10px")
@@ -154,6 +154,7 @@ function drawTimeline(domElement, width) {
         .style("position", "absolute");
 
     let svgRootTimeline = d3.select(domElement).append("svg")
+        .attr("background-color", "red")
         .attr("class", "timelineRoot")
         .attr("width", timelineSize.width + timelineMargin.left + timelineMargin.right)
         .attr("height", timelineSize.height + timelineMargin.top/2 + timelineMargin.bottom);
@@ -218,14 +219,14 @@ function updatePointAttributes(selection) {
             return pointTooltip.hide(d)
         })
         .on("click", function(d) {
-            var minDate = new Date(d.getTime() - 12*3600000);
-            var maxDate = new Date(d.getTime() + 12*3600000);
+            let minDate = new Date(d.getTime() - 12*3600000);
+            let maxDate = new Date(d.getTime() + 12*3600000);
             resetTimelineSpan([minDate, maxDate]);
         });
 }
 
 function updatePoints() {
-    var pointsDOMData = d3.select('#eventPointGroup').selectAll('circle').data(pointsData);
+    let pointsDOMData = d3.select('#eventPointGroup').selectAll('circle').data(pointsData);
     initPointAttributes(pointsDOMData.enter().append('circle')); // enter
     updatePointAttributes(pointsDOMData); // update
     pointsDOMData.exit().remove(); // exit
@@ -236,7 +237,7 @@ function addData(data) {
     pointsData = data;
     d3.select('#timelineInner').append('g').attr('id', 'eventPointGroup');
 
-    var datespan = d3.extent(data);
+    let datespan = d3.extent(data);
 
     updatePoints();
 
@@ -245,7 +246,7 @@ function addData(data) {
 
 function resetTimelineSpan(datespan) {
     d3.transition().duration(500).tween("zoom", function() {
-        var ix = d3.interpolate(sharedTimeScale.domain(), datespan);
+        let ix = d3.interpolate(sharedTimeScale.domain(), datespan);
         return function(t) {
             zoom.x(sharedTimeScale.domain(ix(t)));
             updateTimeline();
