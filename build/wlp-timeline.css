@@ -1,5 +1,11 @@
 
 
+#timelineRootDiv {
+    font-family: "Avenir";
+    font-size: 10px;
+    position: absolute;
+}
+
 .x text {
     fill: #aaa;
 }
@@ -40,6 +46,11 @@
     fill-opacity: 0.05;
 }
 
+td.tabcol0 {
+    padding-left: 3px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+}
 td.tabcol1 {
     padding-left: 5px;
     padding-top: 3px;
@@ -52,6 +63,13 @@ td.tabcol2 {
 }
 table.tooltiptable {
     margin: -5px;
+}
+
+svg.zoomButton {
+    opacity: 0.2;
+}
+svg.zoomButton:hover {
+    opacity: .5;
 }
 
 .d3-tip {
