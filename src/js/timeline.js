@@ -6,7 +6,7 @@ import viewModel from "./viewModel";
 import d3 from "d3";
 import d3Tip from "d3-tip";
 
-export {drawTimeline, addData, resizeTimeline};
+export {drawTimeline, addDataPoints, addDataHistogram, resizeTimeline};
 
 
 const model = viewModel();
@@ -18,9 +18,11 @@ const timelineSize = {
 };
 
 let sharedTimeScale;
+let histogramScale;
 let zoom;
 
 let pointsData;
+let histogramData;
 
 let timelineXAxisMain;
 let timelineXAxisDays;
@@ -117,6 +119,9 @@ function updateTimeline() {
 
     if (pointsData) {
         updatePoints();
+    }
+    if (histogramData) {
+        updateHistogram();
     }
 
     resetTimeAxis(".x.axisMain", timelineXAxisMain, 0);
@@ -262,9 +267,6 @@ function drawTimeline(domElementID, width) {
 
 function initPointAttributes(selection) {
     return selection
-        .on('mouseover', function (d) {
-            return pointTooltip.show(d)
-        })
         .attr("r", 5)
         .attr("fill", "#555");
 }
@@ -279,6 +281,9 @@ function updatePointAttributes(selection) {
         .on('mouseleave', function (d) {
             return pointTooltip.hide(d)
         })
+        .on('scroll', function (d) {
+            return pointTooltip.hide(d)
+        })
         .on("click", function (d) {
             let minDate = new Date(d.getTime() - 12 * 3600000);
             let maxDate = new Date(d.getTime() + 12 * 3600000);
@@ -288,21 +293,87 @@ function updatePointAttributes(selection) {
 
 function updatePoints() {
     let pointsDOMData = d3.select('#eventPointGroup').selectAll('circle').data(pointsData);
+    pointsDOMData.exit().remove(); // exit
     initPointAttributes(pointsDOMData.enter().append('circle')); // enter
     updatePointAttributes(pointsDOMData); // update
-    pointsDOMData.exit().remove(); // exit
 }
 
-function addData(data) {
+function addDataPoints(data) {
 
     pointsData = data;
     d3.select('#timelineInner').append('g').attr('id', 'eventPointGroup');
 
-    let datespan = d3.extent(data);
+    let dateSpan = d3.extent(data);
 
     updatePoints();
 
-    resetTimelineSpan(datespan);
+    resetTimelineSpan(dateSpan);
+}
+
+function initHistogramAttributes(selection) {
+    return selection
+        .attr("fill", "#555");
+}
+
+function updateHistogramAttributes(selection) {
+    selection.attr("x", function (d) {
+            return sharedTimeScale(d.x);
+        })
+        .attr("y", function (d) {
+            return histogramScale(d.y);
+        })
+        .attr("width", function (d) {
+            return sharedTimeScale(new Date(d.x.getTime() + d.dx)) - sharedTimeScale(d.x) - 1;
+        })
+        .attr("height", function (d) {
+            return timelineSize.height - histogramScale(d.y);
+        });
+    // .on('mouseover', function (d) {
+    //     return pointTooltip.show(d)
+    // })
+    // .on('mouseleave', function (d) {
+    //     return pointTooltip.hide(d)
+    // })
+    // .on('scroll', function (d) {
+    //     return pointTooltip.hide(d)
+    // })
+    // .on("click", function (d) {
+    //     let minDate = new Date(d.getTime() - 12 * 3600000);
+    //     let maxDate = new Date(d.getTime() + 12 * 3600000);
+    //     resetTimelineSpan([minDate, maxDate]);
+    // });
+}
+
+function updateHistogram() {
+    let histogramDOMData = d3.select('#eventHistogramGroup').selectAll('rect').data(histogramData);
+    histogramDOMData.exit().remove(); // exit
+    initHistogramAttributes(histogramDOMData.enter().append('rect')); // enter
+    updateHistogramAttributes(histogramDOMData); // update
+}
+
+function addDataHistogram(data) {
+
+    pointsData = data;
+
+    d3.select('#timelineInner').append('g').attr('id', 'eventHistogramGroup');
+
+    let dateSpan = d3.extent(data);
+    let weekBins = d3.time.weeks(d3.time.week.offset(dateSpan[0], -1),
+        d3.time.week.offset(dateSpan[1], 1));
+    let histogramLayout = d3.layout.histogram()
+        .value(function (d) {
+            return d;
+        })
+        .bins(weekBins);
+    histogramData = histogramLayout(data);
+    histogramScale = d3.scale.linear().range([timelineSize.height, 0]).domain([0, d3.max(histogramData, function (d) {
+        return d.y;
+    })]);
+    sharedTimeScale.domain(d3.extent(weekBins));
+
+    updateHistogram();
+
+    resetTimelineSpan(dateSpan);
 }
 
 function resetTimelineSpan(dateSpan) {

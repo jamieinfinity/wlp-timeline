@@ -12,27 +12,36 @@
 </head>
 
 <body>
-    <div id="rootdiv" ></div>
+<div id="rootdiv"></div>
 </body>
 
-<script type="text/javascript" >
+<script type="text/javascript">
 
     function randomDate(start, end) {
-       return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+        return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
     }
 
     wlp_timeline.drawTimeline("#rootdiv", 900);
 
-    var dates = [];
-    for(var i=0; i<10; i++) {
-        dates.push(randomDate(new Date(2016, 0, 1), new Date()));
-    }
+    // random dates
+    //    var dates = [];
+    //    for (var i = 0; i < 10; i++) {
+    //        dates.push(randomDate(new Date(2016, 0, 1), new Date()));
+    //    }
 
-    wlp_timeline.addData(dates);
+    d3.json("test/_data/tweets_1.json", function (error, data) {
+        let dates = data.filter(function(d) {
+            return d["text"].indexOf('switched ON:') !== -1;
+        });
+        dates = dates.map(function(d) {
+            return new Date(d["datetime"]);
+        });
+        wlp_timeline.addDataHistogram(dates);
+    });
 
-//    window.onresize = function() {
-//        wlp_timeline.resizeTimeline(400);
-//    }
+    //    window.onresize = function() {
+    //        wlp_timeline.resizeTimeline(400);
+    //    }
 
 
 </script>
