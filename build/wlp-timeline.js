@@ -20,10 +20,13 @@
 
     let sharedTimeScale;
     let histogramScale;
+    let histogramScaleDays;
+    let histogramScaleWeeks;
     let zoom;
 
     let pointsData;
-    let histogramData;
+    let histogramDataDays;
+    let histogramDataWeeks;
 
     let timelineXAxisMain;
     let timelineXAxisDays;
@@ -119,10 +122,23 @@
     function updateTimeline() {
 
         if (pointsData) {
-            updatePoints();
+            if (timelineSpanInDays() <= 14) {
+                updatePoints(pointsData);
+            } else {
+                updatePoints({});
+            }
         }
-        if (histogramData) {
-            updateHistogram();
+        if (histogramDataDays && histogramDataWeeks) {
+            if (timelineSpanInDays() > 60) {
+                histogramScale = histogramScaleWeeks;
+                updateHistogram(histogramDataWeeks);
+            } else if (timelineSpanInDays() > 10) {
+                histogramScale = histogramScaleDays;
+                updateHistogram(histogramDataDays);
+            } else {
+                histogramScale = histogramScaleDays;
+                updateHistogram({});
+            }
         }
 
         resetTimeAxis(".x.axisMain", timelineXAxisMain, 0);
@@ -142,7 +158,7 @@
 
         pointTooltip = d3.tip()
             .attr('class', 'd3-tip')
-            .offset([-7, 0])
+            .offset([-10, 0])
             // .direction(function(d) {
             //     return 's';
             // })
@@ -272,7 +288,20 @@
             .attr("fill", "#555");
     }
     function updatePointAttributes(selection) {
-        selection.attr("cy", timelineSize.height / 2)
+        selection
+            .attr("cy", function () {
+                return timelineSize.height / 2;
+            })
+            .attr("opacity", function () {
+                let transDist = (timelineSpanInDays() - 14) / 4;
+                if (transDist <= 0 && transDist >= -1) { // transition
+                    return -transDist;
+                } else if (transDist >= 0) { // vanish
+                    return 0;
+                } else { // fully visible
+                    return 1;
+                }
+            })
             .attr("cx", function (d) {
                 return sharedTimeScale(d);
             })
@@ -292,8 +321,8 @@
             });
     }
 
-    function updatePoints() {
-        let pointsDOMData = d3.select('#eventPointGroup').selectAll('circle').data(pointsData);
+    function updatePoints(data) {
+        let pointsDOMData = d3.select('#eventPointGroup').selectAll('circle').data(data);
         pointsDOMData.exit().remove(); // exit
         initPointAttributes(pointsDOMData.enter().append('circle')); // enter
         updatePointAttributes(pointsDOMData); // update
@@ -302,11 +331,12 @@
     function addDataPoints(data) {
 
         pointsData = data;
-        d3.select('#timelineInner').append('g').attr('id', 'eventPointGroup');
+        d3.select('#timelineInner').append('g')
+            .attr('id', 'eventPointGroup');
 
         let dateSpan = d3.extent(data);
 
-        updatePoints();
+        updatePoints(pointsData);
 
         resetTimelineSpan(dateSpan);
     }
@@ -317,7 +347,18 @@
     }
 
     function updateHistogramAttributes(selection) {
-        selection.attr("x", function (d) {
+        selection
+            .attr("opacity", function () {
+                let transDist = (timelineSpanInDays() - 14) / 4;
+                if (transDist <= 0 && transDist >= -1) { // transition
+                    return 1 + transDist;
+                } else if (transDist >= 0) { // visible
+                    return 1;
+                } else { // vanish
+                    return 0;
+                }
+            })
+            .attr("x", function (d) {
                 return sharedTimeScale(d.x);
             })
             .attr("y", function (d) {
@@ -345,8 +386,8 @@
         // });
     }
 
-    function updateHistogram() {
-        let histogramDOMData = d3.select('#eventHistogramGroup').selectAll('rect').data(histogramData);
+    function updateHistogram(data) {
+        let histogramDOMData = d3.select('#eventHistogramGroup').selectAll('rect').data(data);
         histogramDOMData.exit().remove(); // exit
         initHistogramAttributes(histogramDOMData.enter().append('rect')); // enter
         updateHistogramAttributes(histogramDOMData); // update
@@ -359,22 +400,41 @@
         d3.select('#timelineInner').append('g').attr('id', 'eventHistogramGroup');
 
         let dateSpan = d3.extent(data);
-        let weekBins = d3.time.weeks(d3.time.week.offset(dateSpan[0], -1),
-            d3.time.week.offset(dateSpan[1], 1));
+
+        let bins = d3.time.days(d3.time.day.offset(dateSpan[0], -1),
+            d3.time.day.offset(dateSpan[1], 1));
         let histogramLayout = d3.layout.histogram()
             .value(function (d) {
                 return d;
             })
-            .bins(weekBins);
-        histogramData = histogramLayout(data);
-        histogramScale = d3.scale.linear().range([timelineSize.height, 0]).domain([0, d3.max(histogramData, function (d) {
+            .bins(bins);
+        histogramDataDays = histogramLayout(data);
+        histogramScaleDays = d3.scale.linear().range([timelineSize.height, 0]).domain([0, d3.max(histogramDataDays, function (d) {
             return d.y;
         })]);
-        sharedTimeScale.domain(d3.extent(weekBins));
 
-        updateHistogram();
+        bins = d3.time.weeks(d3.time.week.offset(dateSpan[0], -1),
+            d3.time.week.offset(dateSpan[1], 1));
+        histogramLayout = d3.layout.histogram()
+            .value(function (d) {
+                return d;
+            })
+            .bins(bins);
+        histogramDataWeeks = histogramLayout(data);
+        histogramScaleWeeks = d3.scale.linear().range([timelineSize.height, 0]).domain([0, d3.max(histogramDataWeeks, function (d) {
+            return d.y;
+        })]);
+
+        histogramScale = histogramScaleWeeks;
+        sharedTimeScale.domain(d3.extent(bins));
+        updateHistogram(histogramDataWeeks);
 
         resetTimelineSpan(dateSpan);
+    }
+
+    function addData(data) {
+        addDataPoints(data);
+        addDataHistogram(data);
     }
 
     function resetTimelineSpan(dateSpan) {
@@ -433,8 +493,7 @@
 
     exports.version = version;
     exports.drawTimeline = drawTimeline;
-    exports.addDataPoints = addDataPoints;
-    exports.addDataHistogram = addDataHistogram;
+    exports.addData = addData;
     exports.resizeTimeline = resizeTimeline;
     exports.viewModel = viewModel;
 
