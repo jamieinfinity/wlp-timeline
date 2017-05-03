@@ -17,6 +17,8 @@
         height: 70 - timelineMargin.top - timelineMargin.bottom,
         width: 0
     };
+    const zoomLevelDayTransition = 30;
+    const zoomLevelWeekTransition = 180;
 
     let sharedTimeScale;
     let histogramScale;
@@ -122,17 +124,17 @@
     function updateTimeline() {
 
         if (pointsData) {
-            if (timelineSpanInDays() <= 14) {
+            if (timelineSpanInDays() <= zoomLevelDayTransition) {
                 updatePoints(pointsData);
             } else {
                 updatePoints({});
             }
         }
         if (histogramDataDays && histogramDataWeeks) {
-            if (timelineSpanInDays() > 60) {
+            if (timelineSpanInDays() > zoomLevelWeekTransition) {
                 histogramScale = histogramScaleWeeks;
                 updateHistogram(histogramDataWeeks);
-            } else if (timelineSpanInDays() > 10) {
+            } else if (timelineSpanInDays() > (zoomLevelDayTransition - 4)) {
                 histogramScale = histogramScaleDays;
                 updateHistogram(histogramDataDays);
             } else {
@@ -293,7 +295,7 @@
                 return timelineSize.height / 2;
             })
             .attr("opacity", function () {
-                let transDist = (timelineSpanInDays() - 14) / 4;
+                let transDist = (timelineSpanInDays() - zoomLevelDayTransition) / 4;
                 if (transDist <= 0 && transDist >= -1) { // transition
                     return -transDist;
                 } else if (transDist >= 0) { // vanish
@@ -349,7 +351,7 @@
     function updateHistogramAttributes(selection) {
         selection
             .attr("opacity", function () {
-                let transDist = (timelineSpanInDays() - 14) / 4;
+                let transDist = (timelineSpanInDays() - zoomLevelDayTransition) / 4;
                 if (transDist <= 0 && transDist >= -1) { // transition
                     return 1 + transDist;
                 } else if (transDist >= 0) { // visible
