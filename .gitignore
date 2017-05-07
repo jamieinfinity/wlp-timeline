@@ -1,10 +1,28 @@
-.DS_Store
-.idea
-_data*
-_libs*
-_images*
-__pycache*
+# Logs
+logs
+*.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+
+# Coverage tools
+lib-cov
+coverage
+coverage.html
+.cover*
+.coveralls.yml
+
+# Dependency directory
 node_modules
-npm-debug.log
-*.zip
-*.ipynb_checkpoints
+
+# Editor and other tmp files
+*.swp
+*.un~
+*.iml
+*.ipr
+*.iws
+*.sublime-*
+.idea/
+*.DS_Store

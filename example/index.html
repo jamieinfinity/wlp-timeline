@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>wlp-timeline</title>
+    <style type="text/css">
+		.area {
+		  fill: steelblue;
+		  clip-path: url(#clip);
+		}
+
+		.zoom {
+		  cursor: move;
+		  fill: none;
+		  pointer-events: all;
+		}
+	</style>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script type="text/javascript" src="./build/wlp-timeline.js"></script>
+</head>
+<body>
+<svg width="960" height="500"></svg>
+
+<script type="text/javascript">
+	wlp_timeline.makeTimeline();
+</script>
+</body>
+</html>

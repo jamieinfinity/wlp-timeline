@@ -4,40 +4,52 @@
   "description": "One of several core D3-based WorldLine Project components that is an interactive zoomable timeline for fluidly exploring event data spanning orders of magnitude in timescales.",
   "author": "Jamie Williams",
   "license": "BSD-3-Clause",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jamieinfinity/wlp-timeline.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jamieinfinity/wlp-timeline/issues"
+  },
+  "homepage": "https://github.com/jamieinfinity/wlp-timeline#readme",
   "keywords": [
     "D3",
     "timeline",
     "WorldLine Project"
   ],
-  "main": "build/wlp-timeline.js",
-  "jsnext:main": "index",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
   "scripts": {
-    "bump": "npm --no-git-tag-version version patch",
-    "bumptag": "npm version patch -m 'Tag %s'",
-    "bundle": "node -e 'process.stdout.write(\"var version = \\\"\" + require(\"./package.json\").version + \"\\\";export * from \\\"../index\\\"; export {version};\");' > build/bundle.js",
-    "rollup": "rollup -f umd -g d3:d3,d3-tip:d3.tip -n wlp_timeline -o build/wlp-timeline.js -- build/bundle.js",
-    "css": "cp src/css/timeline.css build/wlp-timeline.css",
-    "resources": "cp src/resources/* build/",
-    "pretest": "mkdir -p build && npm run bundle && npm run rollup && npm run css && npm run resources",
-    "test": "faucet `find test -name '*-test.js'` && eslint index.js src/js",
-    "uglify": "uglifyjs build/wlp-timeline.js -c -m -o build/wlp-timeline.min.js",
-    "build": "rm -f build/wlp-timeline.zip && zip -j build/wlp-timeline.zip -- LICENSE README.md build/wlp-timeline.js build/wlp-timeline.css build/wlp-timeline.min.js",
-    "prepublish": "npm run test && npm run uglify && npm run build",
-    "css:watch": "watch 'npm run css' src/css/",
-    "js:watch": "watch 'npm run pretest' src/js/",
-    "watch": "parallelshell 'npm run css:watch' 'npm run js:watch'"
+    "pretest": "script/pretest",
+    "test": "script/test",
+    "prepublish": "script/prepublish",
+    "start": "script/start",
+    "dev": "NODE_ENV=dev && script/prepublish --watch",
+    "reload": "livereload 'example/build/'",
+    "watch": "npm-run-all --parallel reload dev"
   },
   "dependencies": {
-    "d3": "^3.5.13",
-    "d3-tip": "^0.6.7"
+    "d3": "^4.8.0"
   },
   "devDependencies": {
-    "faucet": "0.0",
-    "parallelshell": "^2.0.0",
-    "rollup": "0.25.0",
-    "tape": "^4.4",
-    "uglify-js": "^2.6",
-    "watch": "^0.17.1",
-    "license-checker": "^5.1.2"
+    "babel-eslint": "^7.1.1",
+    "eslint": "^3.12.2",
+    "json2module": "0.0",
+    "http-server": "^0.9.0",
+    "package-preamble": "0.0",
+    "rimraf": "2",
+    "rollup": "0.36",
+    "rollup-plugin-ascii": "0.0",
+    "rollup-plugin-commonjs": "^7.0.0",
+    "rollup-plugin-node-resolve": "2",
+    "rollup-watch": "^3.1.0",
+    "tape": "4",
+    "uglify-js": "2",
+    "uglifyjs": "^2.4.10",
+    "livereload": "^0.6.0",
+    "npm-run-all": "^4.0.0",
+    "rollup-plugin-replace": "^1.1.1"
   }
 }
