@@ -38,37 +38,25 @@ function makeTimeline() {
         .attr("class", "focus")
         .attr("transform", "translate(" + timelineMargin.left + "," + timelineMargin.top + ")");
 
-    d3.csv("sp500.csv", type, function (error, data) {
-        if (error) throw error;
+    x.domain([parseDate("Jan 2016"), parseDate("Jan 2018")]);
+    x0.domain(x.domain());
 
-        x.domain(d3.extent(data, function (d) {
-            return d.date;
-        }));
-        x0.domain(x.domain());
+    focus.append("g")
+        .attr("class", "axis axis--x")
+        .attr("transform", "translate(0," + timelineSize.height + ")")
+        .call(xAxis);
 
-        focus.append("g")
-            .attr("class", "axis axis--x")
-            .attr("transform", "translate(0," + timelineSize.height + ")")
-            .call(xAxis);
-
-        svg.append("rect")
-            .attr("class", "zoom")
-            .attr("width", timelineSize.width)
-            .attr("height", timelineSize.height)
-            .attr("transform", "translate(" + timelineMargin.left + "," + timelineMargin.top + ")")
-            .call(zoom);
-    });
+    svg.append("rect")
+        .attr("class", "zoom")
+        .attr("width", timelineSize.width)
+        .attr("height", timelineSize.height)
+        .attr("transform", "translate(" + timelineMargin.left + "," + timelineMargin.top + ")")
+        .call(zoom);
 
     function zoomed() {
         const t = d3.event.transform;
         x.domain(t.rescaleX(x0).domain());
         focus.select(".axis--x").call(xAxis);
-    }
-
-    function type(d) {
-        d.date = parseDate(d.date);
-        d.price = +d.price;
-        return d;
     }
 
 }
