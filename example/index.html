@@ -3,25 +3,35 @@
 <head>
 	<title>wlp-timeline</title>
     <style type="text/css">
-		.area {
-		  fill: steelblue;
-		  clip-path: url(#clip);
-		}
 
 		.zoom {
-		  cursor: move;
-		  fill: none;
-		  pointer-events: all;
+            cursor: move;
+		    fill: none;
+		    pointer-events: all;
+            fill: white;
+            fill-opacity: 0;
+            stroke: #ddd;
+            stroke-width: 3;
 		}
+
+        .axis--x text {
+            fill: #aaa;
+        }
+        .axis--x path,
+        .axis--x line {
+            fill: none;
+            stroke-width: 1;
+            stroke: #ddd;
+        }
+
 	</style>
     <script src="https://d3js.org/d3.v4.min.js"></script>
     <script type="text/javascript" src="./build/wlp-timeline.js"></script>
 </head>
 <body>
-<svg width="960" height="500"></svg>
-
+<svg width="1000" height="200"></svg>
+</body>
 <script type="text/javascript">
 	wlp_timeline.makeTimeline();
 </script>
-</body>
 </html>
