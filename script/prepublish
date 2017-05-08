@@ -20,4 +20,5 @@ rollup -c -f umd -n wlp_timeline -o $build_dir/$target_point.js -- $entry_point
 # Remember live reload happens only with example build, once done prepublish has to be run again
 rollup -c $1 -f umd -n wlp_timeline -o $example_dir/$build_dir/$target_point.js -- $entry_point
 
+# uglify seems to not work so well with es6 code
 # uglifyjs $build_dir/$target_point.js -c negate_iife=false -m -o $build_dir/$target_point.min.js
