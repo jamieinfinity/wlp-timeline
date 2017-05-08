@@ -31,7 +31,11 @@
     "watch": "npm-run-all --parallel reload dev"
   },
   "dependencies": {
-    "d3": "^4.8.0"
+    "d3-axis": "^1.0.6",
+    "d3-scale": "^1.0.5",
+    "d3-selection": "^1.0.6",
+    "d3-time-format": "^2.0.5",
+    "d3-zoom": "^1.1.4"
   },
   "devDependencies": {
     "babel-eslint": "^7.1.1",

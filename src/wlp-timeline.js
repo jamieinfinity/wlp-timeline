@@ -1,4 +1,10 @@
-import * as d3 from "d3";
+import {select, event} from "d3-selection";
+import {scaleTime} from "d3-scale";
+import {timeParse} from "d3-time-format";
+import {axisBottom} from "d3-axis";
+import {zoom} from "d3-zoom";
+
+
 
 function makeTimeline() {
 
@@ -11,18 +17,18 @@ function makeTimeline() {
         width: 900 - timelineMargin.top - timelineMargin.bottom
     };
 
-    const svg = d3.select("svg");
+    const svg = select("svg");
 
-    const parseDate = d3.timeParse("%b %Y");
+    const parseDate = timeParse("%b %Y");
 
-    const x = d3.scaleTime().range([0, timelineSize.width]),
-        x0 = d3.scaleTime().range([0, timelineSize.width]);
+    const x = scaleTime().range([0, timelineSize.width]),
+        x0 = scaleTime().range([0, timelineSize.width]);
 
-    const xAxis = d3.axisBottom(x)
+    const xAxis = axisBottom(x)
         .tickSize(-timelineSize.height)
         .tickPadding(6);
 
-    const zoom = d3.zoom()
+    const zoomAxis = zoom()
         .scaleExtent([1, Infinity])
         .translateExtent([[0, 0], [timelineSize.width, timelineSize.height]])
         .extent([[0, 0], [timelineSize.width, timelineSize.height]])
@@ -51,10 +57,10 @@ function makeTimeline() {
         .attr("width", timelineSize.width)
         .attr("height", timelineSize.height)
         .attr("transform", "translate(" + timelineMargin.left + "," + timelineMargin.top + ")")
-        .call(zoom);
+        .call(zoomAxis);
 
     function zoomed() {
-        const t = d3.event.transform;
+        const t = event.transform;
         x.domain(t.rescaleX(x0).domain());
         focus.select(".axis--x").call(xAxis);
     }
