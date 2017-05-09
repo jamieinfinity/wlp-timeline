@@ -22,6 +22,7 @@
     "test": "test"
   },
   "scripts": {
+    "css": "cp src/css/wlp-timeline.css build/wlp-timeline.css",
     "pretest": "script/pretest",
     "test": "script/test",
     "prepublish": "script/prepublish",

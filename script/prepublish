@@ -14,10 +14,11 @@ rm -rf $example_dir/$build_dir
 # Create a build folder
 mkdir $example_dir/$build_dir/
 
-
+cp src/css/wlp-timeline.css $build_dir/wlp-timeline.css
 rollup -c -f umd -n wlp_timeline -o $build_dir/$target_point.js -- $entry_point
 
 # Remember live reload happens only with example build, once done prepublish has to be run again
+cp src/css/wlp-timeline.css $example_dir/$build_dir/wlp-timeline.css
 rollup -c $1 -f umd -n wlp_timeline -o $example_dir/$build_dir/$target_point.js -- $entry_point
 
 # uglify seems to not work so well with es6 code

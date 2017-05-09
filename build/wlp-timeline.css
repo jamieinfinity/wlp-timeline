@@ -1,0 +1,18 @@
+.zoom {
+    cursor: move;
+    pointer-events: all;
+    fill: white;
+    fill-opacity: 0;
+    stroke: #ddd;
+    stroke-width: 3;
+}
+
+.axis--x text {
+    fill: #aaa;
+}
+.axis--x path,
+.axis--x line {
+    fill: none;
+    stroke-width: 1;
+    stroke: #ddd;
+}
