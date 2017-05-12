@@ -7,11 +7,11 @@
     stroke-width: 3;
 }
 
-.axis--x text {
+.axis-x text {
     fill: #aaa;
 }
-.axis--x path,
-.axis--x line {
+.axis-x path,
+.axis-x line {
     fill: none;
     stroke-width: 1;
     stroke: #ddd;
