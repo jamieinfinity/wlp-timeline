@@ -1,6 +1,25 @@
-.zoom {
+
+#timelineRootDiv {
+    font-family: "Avenir";
+    font-size: 10px;
+    position: absolute;
+}
+
+.timelineInner {
     cursor: move;
     pointer-events: all;
+    fill: white;
+    fill-opacity: 0;
+    stroke: #ddd;
+    stroke-width: 3;
+}
+
+#innertimelinebackground {
+    fill: white;
+    fill-opacity: 0;
+}
+
+#outertimelinebackground {
     fill: white;
     fill-opacity: 0;
     stroke: #ddd;

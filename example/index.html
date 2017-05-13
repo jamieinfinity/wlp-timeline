@@ -1,14 +1,27 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>wlp-timeline</title>
+    <title>wlp-timeline</title>
     <script type="text/javascript" src="./build/wlp-timeline.js"></script>
     <link href="build/wlp-timeline.css" rel="stylesheet" type="text/css"/>
+    <style>
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            width: 960px;
+            margin-top: 20px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+    </style>
 </head>
 <body>
-<svg width="1000" height="200"></svg>
+<div id="rootdiv"></div>
 </body>
 <script type="text/javascript">
-	wlp_timeline.makeTimeline();
+    wlp_timeline.makeTimeline("#rootdiv", 900);
 </script>
 </html>
