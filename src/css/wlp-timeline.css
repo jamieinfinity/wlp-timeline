@@ -5,15 +5,6 @@
     position: absolute;
 }
 
-.timelineInner {
-    cursor: move;
-    pointer-events: all;
-    fill: white;
-    fill-opacity: 0;
-    stroke: #ddd;
-    stroke-width: 3;
-}
-
 #innertimelinebackground {
     fill: white;
     fill-opacity: 0;
@@ -26,12 +17,26 @@
     stroke-width: 3;
 }
 
-.axis-x text {
-    fill: #aaa;
-}
 .axis-x path,
 .axis-x line {
     fill: none;
     stroke-width: 1;
     stroke: #ddd;
 }
+.axis-x.main-axis text {
+    fill: #aaa;
+}
+.axis-x.day-names-axis text {
+    fill: #ddd;
+}
+.axis-x.days-axis path,
+.axis-x.days-axis line {
+    stroke-width: 2;
+    stroke: #ccc;
+}
+.axis-x.weeks-axis path,
+.axis-x.weeks-axis line {
+    stroke-width: 2;
+    stroke: #888;
+}
+
