@@ -22,7 +22,6 @@
     "test": "test"
   },
   "scripts": {
-    "css": "cp src/css/wlp-timeline.css build/wlp-timeline.css",
     "pretest": "script/pretest",
     "test": "script/test",
     "prepublish": "script/prepublish",
@@ -33,6 +32,7 @@
   },
   "dependencies": {
     "d3-axis": "^1.0.6",
+    "d3-request": "^1.0.5",
     "d3-scale": "^1.0.5",
     "d3-selection": "^1.0.6",
     "d3-time": "^1.0.6",

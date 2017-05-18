@@ -40,3 +40,9 @@
     stroke: #888;
 }
 
+svg.zoomButton {
+    opacity: 0.2;
+}
+svg.zoomButton:hover {
+    opacity: .5;
+}

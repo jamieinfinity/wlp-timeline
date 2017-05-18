@@ -5926,6 +5926,347 @@ var zoom = function() {
   return zoom;
 };
 
+var request = function(url, callback) {
+  var request,
+      event = dispatch("beforesend", "progress", "load", "error"),
+      mimeType,
+      headers = map$1(),
+      xhr = new XMLHttpRequest,
+      user = null,
+      password = null,
+      response,
+      responseType,
+      timeout = 0;
+
+  // If IE does not support CORS, use XDomainRequest.
+  if (typeof XDomainRequest !== "undefined"
+      && !("withCredentials" in xhr)
+      && /^(http(s)?:)?\/\//.test(url)) xhr = new XDomainRequest;
+
+  "onload" in xhr
+      ? xhr.onload = xhr.onerror = xhr.ontimeout = respond
+      : xhr.onreadystatechange = function(o) { xhr.readyState > 3 && respond(o); };
+
+  function respond(o) {
+    var status = xhr.status, result;
+    if (!status && hasResponse(xhr)
+        || status >= 200 && status < 300
+        || status === 304) {
+      if (response) {
+        try {
+          result = response.call(request, xhr);
+        } catch (e) {
+          event.call("error", request, e);
+          return;
+        }
+      } else {
+        result = xhr;
+      }
+      event.call("load", request, result);
+    } else {
+      event.call("error", request, o);
+    }
+  }
+
+  xhr.onprogress = function(e) {
+    event.call("progress", request, e);
+  };
+
+  request = {
+    header: function(name, value) {
+      name = (name + "").toLowerCase();
+      if (arguments.length < 2) return headers.get(name);
+      if (value == null) headers.remove(name);
+      else headers.set(name, value + "");
+      return request;
+    },
+
+    // If mimeType is non-null and no Accept header is set, a default is used.
+    mimeType: function(value) {
+      if (!arguments.length) return mimeType;
+      mimeType = value == null ? null : value + "";
+      return request;
+    },
+
+    // Specifies what type the response value should take;
+    // for instance, arraybuffer, blob, document, or text.
+    responseType: function(value) {
+      if (!arguments.length) return responseType;
+      responseType = value;
+      return request;
+    },
+
+    timeout: function(value) {
+      if (!arguments.length) return timeout;
+      timeout = +value;
+      return request;
+    },
+
+    user: function(value) {
+      return arguments.length < 1 ? user : (user = value == null ? null : value + "", request);
+    },
+
+    password: function(value) {
+      return arguments.length < 1 ? password : (password = value == null ? null : value + "", request);
+    },
+
+    // Specify how to convert the response content to a specific type;
+    // changes the callback value on "load" events.
+    response: function(value) {
+      response = value;
+      return request;
+    },
+
+    // Alias for send("GET", …).
+    get: function(data, callback) {
+      return request.send("GET", data, callback);
+    },
+
+    // Alias for send("POST", …).
+    post: function(data, callback) {
+      return request.send("POST", data, callback);
+    },
+
+    // If callback is non-null, it will be used for error and load events.
+    send: function(method, data, callback) {
+      xhr.open(method, url, true, user, password);
+      if (mimeType != null && !headers.has("accept")) headers.set("accept", mimeType + ",*/*");
+      if (xhr.setRequestHeader) headers.each(function(value, name) { xhr.setRequestHeader(name, value); });
+      if (mimeType != null && xhr.overrideMimeType) xhr.overrideMimeType(mimeType);
+      if (responseType != null) xhr.responseType = responseType;
+      if (timeout > 0) xhr.timeout = timeout;
+      if (callback == null && typeof data === "function") callback = data, data = null;
+      if (callback != null && callback.length === 1) callback = fixCallback(callback);
+      if (callback != null) request.on("error", callback).on("load", function(xhr) { callback(null, xhr); });
+      event.call("beforesend", request, xhr);
+      xhr.send(data == null ? null : data);
+      return request;
+    },
+
+    abort: function() {
+      xhr.abort();
+      return request;
+    },
+
+    on: function() {
+      var value = event.on.apply(event, arguments);
+      return value === event ? request : value;
+    }
+  };
+
+  if (callback != null) {
+    if (typeof callback !== "function") throw new Error("invalid callback: " + callback);
+    return request.get(callback);
+  }
+
+  return request;
+};
+
+function fixCallback(callback) {
+  return function(error, xhr) {
+    callback(error == null ? xhr : null);
+  };
+}
+
+function hasResponse(xhr) {
+  var type = xhr.responseType;
+  return type && type !== "text"
+      ? xhr.response // null on error
+      : xhr.responseText; // "" on error
+}
+
+var type = function(defaultMimeType, response) {
+  return function(url, callback) {
+    var r = request(url).mimeType(defaultMimeType).response(response);
+    if (callback != null) {
+      if (typeof callback !== "function") throw new Error("invalid callback: " + callback);
+      return r.get(callback);
+    }
+    return r;
+  };
+};
+
+var html = type("text/html", function(xhr) {
+  return document.createRange().createContextualFragment(xhr.responseText);
+});
+
+type("application/json", function(xhr) {
+  return JSON.parse(xhr.responseText);
+});
+
+type("text/plain", function(xhr) {
+  return xhr.responseText;
+});
+
+type("application/xml", function(xhr) {
+  var xml = xhr.responseXML;
+  if (!xml) throw new Error("parse error");
+  return xml;
+});
+
+function objectConverter(columns) {
+  return new Function("d", "return {" + columns.map(function(name, i) {
+    return JSON.stringify(name) + ": d[" + i + "]";
+  }).join(",") + "}");
+}
+
+function customConverter(columns, f) {
+  var object = objectConverter(columns);
+  return function(row, i) {
+    return f(object(row), i, columns);
+  };
+}
+
+// Compute unique columns in order of discovery.
+function inferColumns(rows) {
+  var columnSet = Object.create(null),
+      columns = [];
+
+  rows.forEach(function(row) {
+    for (var column in row) {
+      if (!(column in columnSet)) {
+        columns.push(columnSet[column] = column);
+      }
+    }
+  });
+
+  return columns;
+}
+
+var dsv = function(delimiter) {
+  var reFormat = new RegExp("[\"" + delimiter + "\n\r]"),
+      delimiterCode = delimiter.charCodeAt(0);
+
+  function parse(text, f) {
+    var convert, columns, rows = parseRows(text, function(row, i) {
+      if (convert) return convert(row, i - 1);
+      columns = row, convert = f ? customConverter(row, f) : objectConverter(row);
+    });
+    rows.columns = columns;
+    return rows;
+  }
+
+  function parseRows(text, f) {
+    var EOL = {}, // sentinel value for end-of-line
+        EOF = {}, // sentinel value for end-of-file
+        rows = [], // output rows
+        N = text.length,
+        I = 0, // current character index
+        n = 0, // the current line number
+        t, // the current token
+        eol; // is the current token followed by EOL?
+
+    function token() {
+      if (I >= N) return EOF; // special case: end of file
+      if (eol) return eol = false, EOL; // special case: end of line
+
+      // special case: quotes
+      var j = I, c;
+      if (text.charCodeAt(j) === 34) {
+        var i = j;
+        while (i++ < N) {
+          if (text.charCodeAt(i) === 34) {
+            if (text.charCodeAt(i + 1) !== 34) break;
+            ++i;
+          }
+        }
+        I = i + 2;
+        c = text.charCodeAt(i + 1);
+        if (c === 13) {
+          eol = true;
+          if (text.charCodeAt(i + 2) === 10) ++I;
+        } else if (c === 10) {
+          eol = true;
+        }
+        return text.slice(j + 1, i).replace(/""/g, "\"");
+      }
+
+      // common case: find next delimiter or newline
+      while (I < N) {
+        var k = 1;
+        c = text.charCodeAt(I++);
+        if (c === 10) eol = true; // \n
+        else if (c === 13) { eol = true; if (text.charCodeAt(I) === 10) ++I, ++k; } // \r|\r\n
+        else if (c !== delimiterCode) continue;
+        return text.slice(j, I - k);
+      }
+
+      // special case: last token before EOF
+      return text.slice(j);
+    }
+
+    while ((t = token()) !== EOF) {
+      var a = [];
+      while (t !== EOL && t !== EOF) {
+        a.push(t);
+        t = token();
+      }
+      if (f && (a = f(a, n++)) == null) continue;
+      rows.push(a);
+    }
+
+    return rows;
+  }
+
+  function format(rows, columns) {
+    if (columns == null) columns = inferColumns(rows);
+    return [columns.map(formatValue).join(delimiter)].concat(rows.map(function(row) {
+      return columns.map(function(column) {
+        return formatValue(row[column]);
+      }).join(delimiter);
+    })).join("\n");
+  }
+
+  function formatRows(rows) {
+    return rows.map(formatRow).join("\n");
+  }
+
+  function formatRow(row) {
+    return row.map(formatValue).join(delimiter);
+  }
+
+  function formatValue(text) {
+    return text == null ? ""
+        : reFormat.test(text += "") ? "\"" + text.replace(/\"/g, "\"\"") + "\""
+        : text;
+  }
+
+  return {
+    parse: parse,
+    parseRows: parseRows,
+    format: format,
+    formatRows: formatRows
+  };
+};
+
+var csv$1 = dsv(",");
+
+var csvParse = csv$1.parse;
+
+var tsv = dsv("\t");
+
+var tsvParse = tsv.parse;
+
+var dsv$1 = function(defaultMimeType, parse) {
+  return function(url, row, callback) {
+    if (arguments.length < 3) callback = row, row = null;
+    var r = request(url).mimeType(defaultMimeType);
+    r.row = function(_) { return arguments.length ? r.response(responseOf(parse, row = _)) : row; };
+    r.row(row);
+    return callback ? r.get(callback) : r;
+  };
+};
+
+function responseOf(parse, row) {
+  return function(request$$1) {
+    return parse(request$$1.responseText, row);
+  };
+}
+
+dsv$1("text/csv", csvParse);
+
+dsv$1("text/tab-separated-values", tsvParse);
+
 const minTimelineDate = new Date('2016-01-01');
 const maxTimelineDate = new Date('2018-01-02');
 const rootMargin = 40;
@@ -5935,6 +6276,7 @@ const timelineSize = {
         width: 0
     };
 
+let zoomAxis;
 let sharedTimeScale;
 let sharedTimeScale0;
 let timelineXAxisMain;
@@ -6009,28 +6351,46 @@ function updateTimeAxes() {
     resetTimeAxis(".axis-x.weeks-axis", timelineXAxisWeeks, 60);
 }
 
+function zoomed() {
+    const t = event.transform;
+    sharedTimeScale.domain(t.rescaleX(sharedTimeScale0).domain());
+    updateTimeAxes();
+}
+
+// https://github.com/d3/d3-zoom
+// https://bl.ocks.org/mbostock/db6b4335bf1662b413e7968910104f0f
+// https://bl.ocks.org/mbostock/431a331294d2b5ddd33f947cf4c81319
+function resetTimelineSpan(timespan) {
+    select('#timelineInner').transition()
+      .duration(750)
+//    .call(zoomAxis.transform, zoomIdentity);
+      .call(zoomAxis.transform, identity$5
+          .scale(timelineSize.width / (sharedTimeScale0(timespan[1]) - sharedTimeScale0(timespan[0])))
+          .translate(-sharedTimeScale0(timespan[0]), 0));
+}
+
 function makeTimeline(domElementID, width) {
 
     timelineSize.width = width - timelineMargin.left - timelineMargin.right;
 
-    function zoomed() {
-        const t = event.transform;
-        sharedTimeScale.domain(t.rescaleX(sharedTimeScale0).domain());
-        updateTimeAxes();
-    }
-
-    const zoomAxis = zoom()
+    zoomAxis = zoom()
         .scaleExtent([1, Infinity])
         .translateExtent([[0, 0], [timelineSize.width, timelineSize.height]])
         .extent([[0, 0], [timelineSize.width, timelineSize.height]])
-        .on("zoom", zoomed),
+        .on("zoom", zoomed);
 
-        root = select(domElementID).append("div")
+     const root = select(domElementID).append("div")
         .attr("id", "timelineRootDiv")
         .style("top", rootMargin + "px")
         .style("bottom", rootMargin + "px")
         .style("left", rootMargin + "px")
         .style("right", rootMargin + "px"),
+
+        rightDiv = root.append("div")
+        .attr("id", "timelineRightDiv")
+        .style("position", "absolute")
+        .style("top", "8px")
+        .style("left", (timelineSize.width + timelineMargin.left + timelineMargin.right - 3) + "px"),
 
         svgRootTimeline = root.append("svg")
         .attr("id", "timelineRootSVG")
@@ -6076,6 +6436,26 @@ function makeTimeline(domElementID, width) {
         .attr("width", timelineSize.width)
         .attr("height", timelineSize.height);
 
+    function loadSVG(svgData) {
+        let rightSVG = rightDiv.append("svg")
+            .attr("id", "resetTimelineSpan")
+            .attr("class", "zoomButton")
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("width", 28)
+            .attr("height", 28)
+            .attr("viewBox", "0 0 126.308 148.41");
+        select(svgData).selectAll("path").each(function () {
+            let node = rightSVG.node();
+            node.appendChild(this.cloneNode(true));
+        });
+        rightSVG
+            .on("click", function () {
+                resetTimelineSpan([minTimelineDate, maxTimelineDate]);
+            });
+    }
+
+    html("build/zoom_reset.svg", loadSVG);
 }
 
 exports.makeTimeline = makeTimeline;

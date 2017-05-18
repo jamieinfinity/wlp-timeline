@@ -3,7 +3,8 @@ import {scaleTime} from "d3-scale";
 import {timeFormat} from "d3-time-format";
 import {timeSecond, timeMinute, timeHour, timeDay, timeWeek, timeMonth, timeYear} from "d3-time";
 import {axisBottom} from "d3-axis";
-import {zoom} from "d3-zoom";
+import {zoom, zoomIdentity} from "d3-zoom";
+import {html} from "d3-request";
 
 const minTimelineDate = new Date('2016-01-01'),
     maxTimelineDate = new Date('2018-01-02'),
@@ -14,7 +15,8 @@ const minTimelineDate = new Date('2016-01-01'),
         width: 0
     };
 
-let sharedTimeScale,
+let zoomAxis,
+    sharedTimeScale,
     sharedTimeScale0,
     timelineXAxisMain,
     timelineXAxisDays,
@@ -88,28 +90,46 @@ function updateTimeAxes() {
     resetTimeAxis(".axis-x.weeks-axis", timelineXAxisWeeks, 60);
 }
 
+function zoomed() {
+    const t = event.transform;
+    sharedTimeScale.domain(t.rescaleX(sharedTimeScale0).domain());
+    updateTimeAxes();
+}
+
+// https://github.com/d3/d3-zoom
+// https://bl.ocks.org/mbostock/db6b4335bf1662b413e7968910104f0f
+// https://bl.ocks.org/mbostock/431a331294d2b5ddd33f947cf4c81319
+function resetTimelineSpan(timespan) {
+    select('#timelineInner').transition()
+      .duration(750)
+//    .call(zoomAxis.transform, zoomIdentity);
+      .call(zoomAxis.transform, zoomIdentity
+          .scale(timelineSize.width / (sharedTimeScale0(timespan[1]) - sharedTimeScale0(timespan[0])))
+          .translate(-sharedTimeScale0(timespan[0]), 0));
+}
+
 function makeTimeline(domElementID, width) {
 
     timelineSize.width = width - timelineMargin.left - timelineMargin.right;
 
-    function zoomed() {
-        const t = event.transform;
-        sharedTimeScale.domain(t.rescaleX(sharedTimeScale0).domain());
-        updateTimeAxes();
-    }
-
-    const zoomAxis = zoom()
+    zoomAxis = zoom()
         .scaleExtent([1, Infinity])
         .translateExtent([[0, 0], [timelineSize.width, timelineSize.height]])
         .extent([[0, 0], [timelineSize.width, timelineSize.height]])
-        .on("zoom", zoomed),
+        .on("zoom", zoomed);
 
-        root = select(domElementID).append("div")
+     const root = select(domElementID).append("div")
         .attr("id", "timelineRootDiv")
         .style("top", rootMargin + "px")
         .style("bottom", rootMargin + "px")
         .style("left", rootMargin + "px")
         .style("right", rootMargin + "px"),
+
+        rightDiv = root.append("div")
+        .attr("id", "timelineRightDiv")
+        .style("position", "absolute")
+        .style("top", "8px")
+        .style("left", (timelineSize.width + timelineMargin.left + timelineMargin.right - 3) + "px"),
 
         svgRootTimeline = root.append("svg")
         .attr("id", "timelineRootSVG")
@@ -155,6 +175,27 @@ function makeTimeline(domElementID, width) {
         .attr("width", timelineSize.width)
         .attr("height", timelineSize.height);
 
+    function loadSVG(svgData) {
+        let rightSVG = rightDiv.append("svg")
+            .attr("id", "resetTimelineSpan")
+            .attr("class", "zoomButton")
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("width", 28)
+            .attr("height", 28)
+            .attr("viewBox", "0 0 126.308 148.41");
+        select(svgData).selectAll("path").each(function () {
+            let node = rightSVG.node();
+            node.appendChild(this.cloneNode(true));
+        });
+        rightSVG
+            .on("click", function () {
+                resetTimelineSpan([minTimelineDate, maxTimelineDate]);
+            });
+    }
+
+    html("build/zoom_reset.svg", loadSVG);
 }
+
 
 export default makeTimeline;
