@@ -25,6 +25,31 @@
 
 <script type="text/javascript">
     wlp_timeline.makeTimeline("#rootdiv", 900);
+
+    const startDate = new Date(2015, 9, 20);
+    const data = [];
+    for (let i = 0; i<585; i++) {
+        let d = new Date(startDate.getTime() + i*3600*24*1000);
+        data.push(
+            {'timestamp': new Date(d.toDateString()),
+            'measurementValue': (Math.sin(i/10.0 + 2*Math.random())**2)}
+        );
+    }
+    const feed = {
+        'feedInfo': {
+            'feedId': 'steps',
+            'measurementLabel': 'Steps',
+            'measurementTimespan': 1
+        },
+        'data': data
+    };
+    wlp_timeline.addFeed(feed);
 </script>
 
 </html>
+
+
+<!--date-->
+<!--timeSpan-->
+<!--measurementValue-->
+<!--measurementLabel-->

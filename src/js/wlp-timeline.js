@@ -1,21 +1,22 @@
 import {select, event} from "d3-selection";
-import {scaleTime} from "d3-scale";
+import {scaleLinear, scaleTime} from "d3-scale";
 import {timeFormat} from "d3-time-format";
 import {timeSecond, timeMinute, timeHour, timeDay, timeWeek, timeMonth, timeYear} from "d3-time";
 import {axisBottom} from "d3-axis";
 import {zoom, zoomIdentity} from "d3-zoom";
 import {html} from "d3-request";
+import {max, extent} from "d3-array";
 
-const minTimelineDate = new Date('2016-01-01'),
-    maxTimelineDate = new Date('2018-01-02'),
-    rootMargin = 40,
+const rootMargin = 40,
     timelineMargin = {top: 20, right: 20, bottom: 30, left: 20},
     timelineSize = {
-        height: 70 - timelineMargin.top - timelineMargin.bottom,
+        height: 80 - timelineMargin.top - timelineMargin.bottom,
         width: 0
-    };
+    },
+    dataFeeds = [];
 
-let zoomAxis,
+let timelineSpan = [new Date('2016-01-01'), new Date('2018-01-02')],
+    zoomAxis,
     sharedTimeScale,
     sharedTimeScale0,
     timelineXAxisMain,
@@ -51,8 +52,8 @@ function makeTimelineAxis(scale, format, size, padding) {
 }
 
 function setUpCommonTimeAxis() {
-    sharedTimeScale = scaleTime().domain([minTimelineDate, maxTimelineDate]).range([0, timelineSize.width]);
-    sharedTimeScale0 = scaleTime().domain([minTimelineDate, maxTimelineDate]).range([0, timelineSize.width]);
+    sharedTimeScale = scaleTime().domain(timelineSpan).range([0, timelineSize.width]);
+    sharedTimeScale0 = scaleTime().domain(timelineSpan).range([0, timelineSize.width]);
 
     const customTimeFormat = makeTimeTickFormat(".%L", ":%S", "%_I:%M", "%_I %p", "%b %_d", "%b %_d", "%b", "%Y"),
         customTimeFormatDayNames = makeTimeTickFormat(" ", " ", " ", " ", "%a", "%a", "%a", " ");
@@ -94,6 +95,8 @@ function zoomed() {
     const t = event.transform;
     sharedTimeScale.domain(t.rescaleX(sharedTimeScale0).domain());
     updateTimeAxes();
+    updateFeed(dataFeeds[0]);
+
 }
 
 // https://github.com/d3/d3-zoom
@@ -113,7 +116,7 @@ function makeTimeline(domElementID, width) {
     timelineSize.width = width - timelineMargin.left - timelineMargin.right;
 
     zoomAxis = zoom()
-        .scaleExtent([1, Infinity])
+        .scaleExtent([1, 64])
         .translateExtent([[0, 0], [timelineSize.width, timelineSize.height]])
         .extent([[0, 0], [timelineSize.width, timelineSize.height]])
         .on("zoom", zoomed);
@@ -190,12 +193,46 @@ function makeTimeline(domElementID, width) {
         });
         rightSVG
             .on("click", function () {
-                resetTimelineSpan([minTimelineDate, maxTimelineDate]);
+                resetTimelineSpan(timelineSpan);
             });
     }
-
     html("build/zoom_reset.svg", loadSVG);
 }
 
+function updateFeed(feed) {
+    const maxMeasurement = max(feed.data, d => d.measurementValue);
+    const measurementScale = scaleLinear().range([timelineSize.height, 0]).domain([0, maxMeasurement]);
+    const measurements = select('#'+feed.feedInfo.feedId).selectAll('rect').data(feed.data);
 
-export default makeTimeline;
+    measurements.enter().append('rect')
+        .attr("fill", "#555") // static attribute applied to newly added data
+        .merge(measurements)  // merge causes below to be applied to new and existing data
+        .attr("x", function (d) {
+            return sharedTimeScale(d.timestamp);
+        })
+        .attr("y", function (d) {
+            return measurementScale(d.measurementValue);
+        })
+        .attr("width", function (d) {
+            return sharedTimeScale(timeDay.offset(d.timestamp)) - sharedTimeScale(d.timestamp) - 1;
+        })
+        .attr("height", function (d) {
+            return timelineSize.height - measurementScale(d.measurementValue);
+        });
+    measurements.exit().remove();
+}
+
+function addFeed(feed) {
+    dataFeeds.push(feed);
+
+    select('#timelineInner').append('g').attr('id', feed.feedInfo.feedId);
+
+    timelineSpan = extent(feed.data, d => d.timestamp);
+    sharedTimeScale0 = scaleTime().domain(timelineSpan).range([0, timelineSize.width]);
+    resetTimelineSpan(timelineSpan);
+
+    updateFeed(feed);
+}
+
+
+export {makeTimeline, addFeed};

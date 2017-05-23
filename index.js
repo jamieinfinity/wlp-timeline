@@ -1,1 +1,1 @@
-export { default as makeTimeline } from './src/js/wlp-timeline';
+export { makeTimeline, addFeed } from './src/js/wlp-timeline';
