@@ -24,26 +24,56 @@
 </body>
 
 <script type="text/javascript">
-    wlp_timeline.makeTimeline("#rootdiv", 900);
 
-    const startDate = new Date(2015, 9, 20);
-    const data = [];
+    const startDate1 = new Date(2015, 9, 20);
+    const data1 = [];
     for (let i = 0; i<585; i++) {
-        let d = new Date(startDate.getTime() + i*3600*24*1000);
-        data.push(
+        let d = new Date(startDate1.getTime() + i*3600*24*1000);
+        data1.push(
             {'timestamp': new Date(d.toDateString()),
             'measurementValue': (Math.sin(i/10.0 + 2*Math.random())**2)}
         );
     }
-    const feed = {
+    const startDate2 = new Date(2016, 3, 6);
+    const data2 = [];
+    for (let i = 0; i<241; i++) {
+        let d = new Date(startDate2.getTime() + i*3600*24*1000);
+        data2.push(
+            {'timestamp': new Date(d.toDateString()),
+            'measurementValue': (Math.sin(i/10.0 + 2*Math.random())**2)}
+        );
+    }
+    const feed1 = {
         'feedInfo': {
-            'feedId': 'steps',
+            'feedId': 'steps1',
             'measurementLabel': 'Steps',
             'measurementTimespan': 1
         },
-        'data': data
+        'data': data1
     };
-    wlp_timeline.addFeed(feed);
+    const feed2 = {
+        'feedInfo': {
+            'feedId': 'steps2',
+            'measurementLabel': 'Steps',
+            'measurementTimespan': 1
+        },
+        'data': data2
+    };
+    const feed3 = {
+        'feedInfo': {
+            'feedId': 'steps3',
+            'measurementLabel': 'Steps',
+            'measurementTimespan': 1
+        },
+        'data': data1
+    };
+
+    wlp_timeline.makeTimeline("#rootdiv", 800);
+
+    wlp_timeline.addFeed(feed1);
+    wlp_timeline.addFeed(feed2);
+    wlp_timeline.addFeed(feed3);
+
 </script>
 
 </html>

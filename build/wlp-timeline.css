@@ -32,12 +32,12 @@
 .axis-x.days-axis path,
 .axis-x.days-axis line {
     stroke-width: 2;
-    stroke: #ccc;
+    stroke: #ddd;
 }
 .axis-x.weeks-axis path,
 .axis-x.weeks-axis line {
     stroke-width: 2;
-    stroke: #888;
+    stroke: #999;
 }
 
 svg.zoomButton {

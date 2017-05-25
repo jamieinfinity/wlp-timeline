@@ -6334,12 +6334,14 @@ dsv$1("text/tab-separated-values", tsvParse);
 const rootMargin = 40;
 const timelineMargin = {top: 20, right: 20, bottom: 30, left: 20};
 const timelineSize = {
-        height: 80 - timelineMargin.top - timelineMargin.bottom,
+        height: 140 - timelineMargin.top - timelineMargin.bottom,
         width: 0
     };
+const feedPadding = 8;
 const dataFeeds = [];
+const feedIndices = {};
 
-let timelineSpan = [new Date('2016-01-01'), new Date('2018-01-02')];
+let timelineSpan = [new Date('2017-01-01'), new Date('2017-01-02')];
 let zoomAxis;
 let sharedTimeScale;
 let sharedTimeScale0;
@@ -6415,12 +6417,30 @@ function updateTimeAxes() {
     resetTimeAxis(".axis-x.weeks-axis", timelineXAxisWeeks, 60);
 }
 
-function zoomed() {
-    const t = event.transform;
-    sharedTimeScale.domain(t.rescaleX(sharedTimeScale0).domain());
-    updateTimeAxes();
-    updateFeed(dataFeeds[0]);
 
+function updateFeed(feed) {
+
+    const refDate = new Date("2010-01-01"),
+        measurementWidth = sharedTimeScale(day.offset(refDate)) - sharedTimeScale(refDate) - 1,
+        feedHeight = (timelineSize.height - feedPadding)/Object.keys(feedIndices).length - feedPadding,
+        maxMeasurement = max(feed.data, d => d.measurementValue),
+        measurementScale = linear().range([feedHeight, 0]).domain([0, maxMeasurement]),
+        measurements = select('#'+feed.feedInfo.feedId).selectAll('rect').data(feed.data);
+
+    measurements.enter().append('rect')
+        .attr("fill", "#555") // static attribute applied to newly added data
+        .merge(measurements)  // merge causes below to be applied to new and existing data
+        .attr("x", function (d) {
+            return sharedTimeScale(d.timestamp);
+        })
+        .attr("y", function (d) {
+            return measurementScale(d.measurementValue) + feedPadding*(feedIndices[feed.feedInfo.feedId]+1) + feedHeight*feedIndices[feed.feedInfo.feedId];
+        })
+        .attr("width", measurementWidth)
+        .attr("height", function (d) {
+            return feedHeight - measurementScale(d.measurementValue);
+        });
+    measurements.exit().remove();
 }
 
 // https://github.com/d3/d3-zoom
@@ -6433,6 +6453,27 @@ function resetTimelineSpan(timespan) {
       .call(zoomAxis.transform, identity$5
           .scale(timelineSize.width / (sharedTimeScale0(timespan[1]) - sharedTimeScale0(timespan[0])))
           .translate(-sharedTimeScale0(timespan[0]), 0));
+}
+
+function addFeed(feed) {
+    dataFeeds.push(feed);
+
+    select('#timelineInner').append('g').attr('id', feed.feedInfo.feedId);
+
+    feedIndices[feed.feedInfo.feedId] = Object.keys(feedIndices).length;
+    const newTimelineSpan = extent(feed.data, d => d.timestamp);
+    timelineSpan = dataFeeds.length > 0 ? newTimelineSpan : [Math.min(timelineSpan[0], newTimelineSpan[0]), Math.max(timelineSpan[1], newTimelineSpan[1])];
+    sharedTimeScale0 = scaleTime().domain(timelineSpan).range([0, timelineSize.width]);
+    resetTimelineSpan(timelineSpan);
+
+    updateFeed(feed);
+}
+
+function zoomed() {
+    const t = event.transform;
+    sharedTimeScale.domain(t.rescaleX(sharedTimeScale0).domain());
+    updateTimeAxes();
+    dataFeeds.forEach(d=>updateFeed(d));
 }
 
 function makeTimeline(domElementID, width) {
@@ -6521,41 +6562,6 @@ function makeTimeline(domElementID, width) {
             });
     }
     html("build/zoom_reset.svg", loadSVG);
-}
-
-function updateFeed(feed) {
-    const maxMeasurement = max(feed.data, d => d.measurementValue);
-    const measurementScale = linear().range([timelineSize.height, 0]).domain([0, maxMeasurement]);
-    const measurements = select('#'+feed.feedInfo.feedId).selectAll('rect').data(feed.data);
-
-    measurements.enter().append('rect')
-        .attr("fill", "#555") // static attribute applied to newly added data
-        .merge(measurements)  // merge causes below to be applied to new and existing data
-        .attr("x", function (d) {
-            return sharedTimeScale(d.timestamp);
-        })
-        .attr("y", function (d) {
-            return measurementScale(d.measurementValue);
-        })
-        .attr("width", function (d) {
-            return sharedTimeScale(day.offset(d.timestamp)) - sharedTimeScale(d.timestamp) - 1;
-        })
-        .attr("height", function (d) {
-            return timelineSize.height - measurementScale(d.measurementValue);
-        });
-    measurements.exit().remove();
-}
-
-function addFeed(feed) {
-    dataFeeds.push(feed);
-
-    select('#timelineInner').append('g').attr('id', feed.feedInfo.feedId);
-
-    timelineSpan = extent(feed.data, d => d.timestamp);
-    sharedTimeScale0 = scaleTime().domain(timelineSpan).range([0, timelineSize.width]);
-    resetTimelineSpan(timelineSpan);
-
-    updateFeed(feed);
 }
 
 exports.makeTimeline = makeTimeline;
