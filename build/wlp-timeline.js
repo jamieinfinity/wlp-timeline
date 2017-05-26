@@ -6423,10 +6423,10 @@ function updateFeed(feed) {
     const refDate = new Date("2010-01-01"),
         feedHeight = (timelineSize.height - feedPadding)/Object.keys(feedIndices).length - feedPadding,
         maxMeasurement = max(feed.data, d => d.measurementValue),
-        measurementScale = linear().range([feedHeight, 0]).domain([0, maxMeasurement]),
+        measurementScale = linear().range([feedHeight, 0]).domain([feed.feedInfo.measurementMinimum, maxMeasurement]),
         measurements = select('#'+feed.feedInfo.feedId).selectAll('rect').data(feed.data);
     let measurementWidth = sharedTimeScale(day.offset(refDate)) - sharedTimeScale(refDate);
-    measurementWidth = (measurementWidth>1) ? (measurementWidth - 0.5) : measurementWidth; // half pixel padding if possible
+    measurementWidth = (measurementWidth>1) ? (measurementWidth) : measurementWidth; // half pixel padding if possible
 
     measurements.enter().append('rect')
         .attr("fill", "#555") // static attribute applied to newly added data
