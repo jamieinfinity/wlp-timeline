@@ -6334,10 +6334,10 @@ dsv$1("text/tab-separated-values", tsvParse);
 const rootMargin = 40;
 const timelineMargin = {top: 20, right: 20, bottom: 30, left: 20};
 const timelineSize = {
-        height: 140 - timelineMargin.top - timelineMargin.bottom,
+        height: 0,
         width: 0
     };
-const feedPadding = 8;
+const feedPadding = 7;
 const dataFeeds = [];
 const feedIndices = {};
 
@@ -6421,11 +6421,12 @@ function updateTimeAxes() {
 function updateFeed(feed) {
 
     const refDate = new Date("2010-01-01"),
-        measurementWidth = sharedTimeScale(day.offset(refDate)) - sharedTimeScale(refDate) - 1,
         feedHeight = (timelineSize.height - feedPadding)/Object.keys(feedIndices).length - feedPadding,
         maxMeasurement = max(feed.data, d => d.measurementValue),
         measurementScale = linear().range([feedHeight, 0]).domain([0, maxMeasurement]),
         measurements = select('#'+feed.feedInfo.feedId).selectAll('rect').data(feed.data);
+    let measurementWidth = sharedTimeScale(day.offset(refDate)) - sharedTimeScale(refDate);
+    measurementWidth = (measurementWidth>1) ? (measurementWidth-1) : measurementWidth; // 1 pixel padding if possible
 
     measurements.enter().append('rect')
         .attr("fill", "#555") // static attribute applied to newly added data
@@ -6448,8 +6449,7 @@ function updateFeed(feed) {
 // https://bl.ocks.org/mbostock/431a331294d2b5ddd33f947cf4c81319
 function resetTimelineSpan(timespan) {
     select('#timelineInner').transition()
-      .duration(750)
-//    .call(zoomAxis.transform, zoomIdentity);
+      .duration(450)
       .call(zoomAxis.transform, identity$5
           .scale(timelineSize.width / (sharedTimeScale0(timespan[1]) - sharedTimeScale0(timespan[0])))
           .translate(-sharedTimeScale0(timespan[0]), 0));
@@ -6462,7 +6462,7 @@ function addFeed(feed) {
 
     feedIndices[feed.feedInfo.feedId] = Object.keys(feedIndices).length;
     const newTimelineSpan = extent(feed.data, d => d.timestamp);
-    timelineSpan = dataFeeds.length > 0 ? newTimelineSpan : [Math.min(timelineSpan[0], newTimelineSpan[0]), Math.max(timelineSpan[1], newTimelineSpan[1])];
+    timelineSpan = dataFeeds.length === 0 ? newTimelineSpan : [Math.min(timelineSpan[0], newTimelineSpan[0]), Math.max(timelineSpan[1], newTimelineSpan[1])];
     sharedTimeScale0 = scaleTime().domain(timelineSpan).range([0, timelineSize.width]);
     resetTimelineSpan(timelineSpan);
 
@@ -6476,9 +6476,10 @@ function zoomed() {
     dataFeeds.forEach(d=>updateFeed(d));
 }
 
-function makeTimeline(domElementID, width) {
+function makeTimeline(domElementID, width, height) {
 
     timelineSize.width = width - timelineMargin.left - timelineMargin.right;
+    timelineSize.height = height - timelineMargin.top - timelineMargin.bottom;
 
     zoomAxis = zoom()
         .scaleExtent([1, 64])
