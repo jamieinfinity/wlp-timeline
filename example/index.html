@@ -3,6 +3,7 @@
 <head>
     <title>wlp-timeline</title>
     <script type="text/javascript" src="./build/wlp-timeline.js"></script>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
     <link href="build/wlp-timeline.css" rel="stylesheet" type="text/css"/>
     <style>
         html, body {
@@ -25,45 +26,63 @@
 
 <script type="text/javascript">
 
-    const startDate1 = new Date(2015, 9, 20);
-    const data1 = [];
-    for (let i = 0; i<585; i++) {
-        let d = new Date(startDate1.getTime() + i*3600*24*1000);
-        data1.push(
-            {'timestamp': new Date(d.toDateString()),
-            'measurementValue': (Math.sin(i/10.0 + 2*Math.random())**2)}
-        );
-    }
-    const startDate2 = new Date(2016, 3, 6);
-    const data2 = [];
-    for (let i = 0; i<241; i++) {
-        let d = new Date(startDate2.getTime() + i*3600*24*1000);
-        data2.push(
-            {'timestamp': new Date(d.toDateString()),
-            'measurementValue': (Math.sin(i/10.0 + 2*Math.random())**2)}
-        );
-    }
-    const feed1 = {
-        'feedInfo': {
-            'feedId': 'steps1',
-            'measurementLabel': 'Steps',
-            'measurementTimespan': 1
-        },
-        'data': data1
-    };
-    const feed2 = {
-        'feedInfo': {
-            'feedId': 'steps2',
-            'measurementLabel': 'Steps',
-            'measurementTimespan': 1
-        },
-        'data': data2
-    };
+    wlp_timeline.makeTimeline("#rootdiv", 600, 300);
 
-    wlp_timeline.makeTimeline("#rootdiv", 600, 111);
+    const weightData = [];
+    const caloriesData = [];
+    const stepsData = [];
 
-    wlp_timeline.addFeed(feed1);
-    wlp_timeline.addFeed(feed2);
+    d3.csv('./fitness_data.csv', function (error, data) {
+
+        if(error) {
+            const startDate1 = new Date(2015, 9, 20);
+            for (let i = 0; i<585; i++) {
+                let d = new Date(startDate1.getTime() + i*3600*24*1000);
+                weightData.push(
+                    {'timestamp': new Date(d.toDateString()),
+                    'measurementValue': (Math.sin(i/10.0 + 2*Math.random())**2)}
+                );
+            }
+            const startDate2 = new Date(2016, 3, 6);
+            for (let i = 0; i<241; i++) {
+                let d = new Date(startDate2.getTime() + i*3600*24*1000);
+                caloriesData.push(
+                    {'timestamp': new Date(d.toDateString()),
+                    'measurementValue': (Math.sin(i/10.0 + 2*Math.random())**2)}
+                );
+            }
+            const startDate3 = new Date(2014, 1, 22);
+            for (let i = 0; i<800; i++) {
+                let d = new Date(startDate3.getTime() + i*3600*24*1000);
+                stepsData.push(
+                    {'timestamp': new Date(d.toDateString()),
+                    'measurementValue': (Math.sin(i/10.0 + 2*Math.random())**2)}
+                );
+            }
+        } else {
+            data.forEach(function (d) {
+                weightData.push({'timestamp': new Date(d['Date']), 'measurementValue': Number(d['Weight'])});
+                caloriesData.push({'timestamp': new Date(d['Date']), 'measurementValue': Number(d['Calories'])});
+                stepsData.push({'timestamp': new Date(d['Date']), 'measurementValue': Number(d['Steps'])});
+            });
+        }
+
+        wlp_timeline.addFeed({
+            'feedInfo': {'feedId': 'steps', 'measurementLabel': 'Steps', 'measurementTimespan': 1},
+            'data': stepsData
+        });
+        wlp_timeline.addFeed({
+            'feedInfo': {'feedId': 'calories', 'measurementLabel': 'Calories', 'measurementTimespan': 1},
+            'data': caloriesData
+        });
+        wlp_timeline.addFeed({
+            'feedInfo': {'feedId': 'weight', 'measurementLabel': 'Weight', 'measurementTimespan': 1},
+            'data': weightData
+        });
+
+    });
+
+
 
 </script>
 

@@ -102,7 +102,7 @@ function updateFeed(feed) {
         measurementScale = scaleLinear().range([feedHeight, 0]).domain([0, maxMeasurement]),
         measurements = select('#'+feed.feedInfo.feedId).selectAll('rect').data(feed.data);
     let measurementWidth = sharedTimeScale(timeDay.offset(refDate)) - sharedTimeScale(refDate);
-    measurementWidth = (measurementWidth>1) ? (measurementWidth-1) : measurementWidth; // 1 pixel padding if possible
+    measurementWidth = (measurementWidth>1) ? (measurementWidth - 0.5) : measurementWidth; // half pixel padding if possible
 
     measurements.enter().append('rect')
         .attr("fill", "#555") // static attribute applied to newly added data
@@ -158,7 +158,7 @@ function makeTimeline(domElementID, width, height) {
     timelineSize.height = height - timelineMargin.top - timelineMargin.bottom;
 
     zoomAxis = zoom()
-        .scaleExtent([1, 64])
+        .scaleExtent([1, 1000])
         .translateExtent([[0, 0], [timelineSize.width, timelineSize.height]])
         .extent([[0, 0], [timelineSize.width, timelineSize.height]])
         .on("zoom", zoomed);
