@@ -1,8 +1,19 @@
 
+#timelineContainer {
+    display: flex;
+    justify-content: center;
+}
+
+#timelineLeftDiv {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+}
+
 #timelineRootDiv {
     font-family: "Avenir";
     font-size: 10px;
-    position: absolute;
 }
 
 #innertimelinebackground {
@@ -23,26 +34,35 @@
     stroke-width: 1;
     stroke: #ddd;
 }
+
 .axis-x.main-axis text {
     fill: #aaa;
 }
+
 .axis-x.day-names-axis text {
     fill: #ddd;
 }
+
 .axis-x.days-axis path,
 .axis-x.days-axis line {
     stroke-width: 2;
     stroke: #ddd;
 }
+
 .axis-x.weeks-axis path,
 .axis-x.weeks-axis line {
     stroke-width: 2;
     stroke: #999;
 }
 
-svg.zoomButton {
-    opacity: 0.2;
+svg.icon {
+    opacity: 0.55;
 }
+
+svg.zoomButton {
+    opacity: 0.45;
+}
+
 svg.zoomButton:hover {
-    opacity: .5;
+    opacity: .8;
 }

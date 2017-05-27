@@ -6331,8 +6331,7 @@ dsv$1("text/csv", csvParse);
 
 dsv$1("text/tab-separated-values", tsvParse);
 
-const rootMargin = 40;
-const timelineMargin = {top: 20, right: 20, bottom: 30, left: 20};
+const timelineMargin = {top: 20, right: 10, bottom: 30, left: 10};
 const timelineSize = {
         height: 0,
         width: 0
@@ -6421,12 +6420,12 @@ function updateTimeAxes() {
 function updateFeed(feed) {
 
     const refDate = new Date("2010-01-01"),
-        feedHeight = (timelineSize.height - feedPadding)/Object.keys(feedIndices).length - feedPadding,
+        feedHeight = (timelineSize.height - feedPadding) / Object.keys(feedIndices).length - feedPadding,
         maxMeasurement = max(feed.data, d => d.measurementValue),
         measurementScale = linear().range([feedHeight, 0]).domain([feed.feedInfo.measurementMinimum, maxMeasurement]),
-        measurements = select('#'+feed.feedInfo.feedId).selectAll('rect').data(feed.data);
+        measurements = select('#' + feed.feedInfo.feedId).selectAll('rect').data(feed.data);
     let measurementWidth = sharedTimeScale(day.offset(refDate)) - sharedTimeScale(refDate);
-    measurementWidth = (measurementWidth>1) ? (measurementWidth) : measurementWidth; // half pixel padding if possible
+    // measurementWidth = (measurementWidth > 1) ? (measurementWidth) : measurementWidth; // half pixel padding if possible
 
     measurements.enter().append('rect')
         .attr("fill", "#555") // static attribute applied to newly added data
@@ -6435,7 +6434,7 @@ function updateFeed(feed) {
             return sharedTimeScale(d.timestamp);
         })
         .attr("y", function (d) {
-            return measurementScale(d.measurementValue) + feedPadding*(feedIndices[feed.feedInfo.feedId]+1) + feedHeight*feedIndices[feed.feedInfo.feedId];
+            return measurementScale(d.measurementValue) + feedPadding * (feedIndices[feed.feedInfo.feedId] + 1) + feedHeight * feedIndices[feed.feedInfo.feedId];
         })
         .attr("width", measurementWidth)
         .attr("height", function (d) {
@@ -6449,14 +6448,16 @@ function updateFeed(feed) {
 // https://bl.ocks.org/mbostock/431a331294d2b5ddd33f947cf4c81319
 function resetTimelineSpan(timespan) {
     select('#timelineInner').transition()
-      .duration(450)
-      .call(zoomAxis.transform, identity$5
-          .scale(timelineSize.width / (sharedTimeScale0(timespan[1]) - sharedTimeScale0(timespan[0])))
-          .translate(-sharedTimeScale0(timespan[0]), 0));
+        .duration(450)
+        .call(zoomAxis.transform, identity$5
+            .scale(timelineSize.width / (sharedTimeScale0(timespan[1]) - sharedTimeScale0(timespan[0])))
+            .translate(-sharedTimeScale0(timespan[0]), 0));
 }
 
 function addFeed(feed) {
     dataFeeds.push(feed);
+
+    loadIconSVG(feed.feedInfo.iconFilename, select('#timelineLeftDiv'), feed.feedInfo.iconSizePx, feed.feedInfo.iconSizePx);
 
     select('#timelineInner').append('g').attr('id', feed.feedInfo.feedId);
 
@@ -6473,7 +6474,32 @@ function zoomed() {
     const t = event.transform;
     sharedTimeScale.domain(t.rescaleX(sharedTimeScale0).domain());
     updateTimeAxes();
-    dataFeeds.forEach(d=>updateFeed(d));
+    dataFeeds.forEach(d => updateFeed(d));
+}
+
+function loadSVG(svgData, parentDiv, iconClass, viewBoxString, width, height, onClick) {
+    const iconSVG = parentDiv.append("svg")
+        .attr("class", iconClass)
+        .attr("x", 0)
+        .attr("y", 0)
+        .attr("width", width)
+        .attr("height", height)
+        .attr("viewBox", viewBoxString);
+    select(svgData).selectAll("path").each(function () {
+        let node = iconSVG.node();
+        node.appendChild(this.cloneNode(true));
+    });
+    select(svgData).selectAll("ellipse").each(function () {
+        let node = iconSVG.node();
+        node.appendChild(this.cloneNode(true));
+    });
+    iconSVG.on("click", onClick);
+}
+
+function loadIconSVG(filename, div, width, height) {
+    html(filename, function(d) {
+        loadSVG(d, div, "icon", "0 0 100 125", width, height, ()=>{});
+    });
 }
 
 function makeTimeline(domElementID, width, height) {
@@ -6487,43 +6513,46 @@ function makeTimeline(domElementID, width, height) {
         .extent([[0, 0], [timelineSize.width, timelineSize.height]])
         .on("zoom", zoomed);
 
-     const root = select(domElementID).append("div")
-        .attr("id", "timelineRootDiv")
-        .style("top", rootMargin + "px")
-        .style("bottom", rootMargin + "px")
-        .style("left", rootMargin + "px")
-        .style("right", rootMargin + "px"),
+    const container = select(domElementID).append("div")
+            .attr("id", "timelineContainer");
 
-        rightDiv = root.append("div")
-        .attr("id", "timelineRightDiv")
-        .style("position", "absolute")
-        .style("top", "8px")
-        .style("left", (timelineSize.width + timelineMargin.left + timelineMargin.right - 3) + "px"),
+        container.append("div")
+            .attr("id", "timelineLeftDiv")
+            .style("margin-top", 22 + "px")
+            .style("margin-bottom", 30 + "px");
+
+    const root = container.append("div")
+            .attr("id", "timelineRootDiv"),
+        rightDiv = container.append("div")
+            .attr("id", "timelineRightDiv")
+            .style("margin-top", 22 + "px")
+            .style("margin-bottom", 30 + "px"),
 
         svgRootTimeline = root.append("svg")
-        .attr("id", "timelineRootSVG")
-        .attr("width", timelineSize.width + timelineMargin.left + timelineMargin.right)
-        .attr("height", timelineSize.height + timelineMargin.top / 2 + timelineMargin.bottom),
+            .attr("id", "timelineRootSVG")
+            .attr("width", timelineSize.width + timelineMargin.left + timelineMargin.right)
+            .attr("height", timelineSize.height + timelineMargin.top / 2 + timelineMargin.bottom),
 
         svgAxesTimeline = svgRootTimeline.append("g")
-        .attr("id", "timelineAxes")
-        .attr("pointer-events", "none")
-        .attr("transform", "translate(" + timelineMargin.left + "," + timelineMargin.top / 2 + ")"),
+            .attr("id", "timelineAxes")
+            .attr("pointer-events", "none")
+            .attr("transform", "translate(" + timelineMargin.left + "," + timelineMargin.top / 2 + ")"),
 
         svgInnerTimeline = svgRootTimeline.append("svg")
-        .attr("id", "timelineInner")
-        .attr("vector-effect", "non-scaling-stroke")
-        .attr("width", timelineSize.width)
-        .attr("height", timelineSize.height)
-        .attr("x", timelineMargin.left)
-        .attr("y", timelineMargin.top / 2)
-        .attr("viewBox", "0 0 " + timelineSize.width + " " + timelineSize.height)
-        .call(zoomAxis),
-
+            .attr("id", "timelineInner")
+            .attr("vector-effect", "non-scaling-stroke")
+            .attr("width", timelineSize.width)
+            .attr("height", timelineSize.height)
+            .attr("x", timelineMargin.left)
+            .attr("y", timelineMargin.top / 2)
+            .attr("viewBox", "0 0 " + timelineSize.width + " " + timelineSize.height)
+            .call(zoomAxis),
         svgOuterTimeline = svgRootTimeline.append("g")
-        .attr("id", "timelineOuter")
-        .attr("pointer-events", "none")
-        .attr("transform", "translate(" + timelineMargin.left + "," + timelineMargin.top / 2 + ")");
+            .attr("id", "timelineOuter")
+            .attr("pointer-events", "none")
+            .attr("transform", "translate(" + timelineMargin.left + "," + timelineMargin.top / 2 + ")");
+
+
 
     setUpCommonTimeAxis();
 
@@ -6544,25 +6573,24 @@ function makeTimeline(domElementID, width, height) {
         .attr("width", timelineSize.width)
         .attr("height", timelineSize.height);
 
-    function loadSVG(svgData) {
-        let rightSVG = rightDiv.append("svg")
-            .attr("id", "resetTimelineSpan")
-            .attr("class", "zoomButton")
-            .attr("x", 0)
-            .attr("y", 0)
-            .attr("width", 28)
-            .attr("height", 28)
-            .attr("viewBox", "0 0 126.308 148.41");
-        select(svgData).selectAll("path").each(function () {
-            let node = rightSVG.node();
-            node.appendChild(this.cloneNode(true));
-        });
-        rightSVG
-            .on("click", function () {
-                resetTimelineSpan(timelineSpan);
-            });
-    }
-    html("build/zoom_reset.svg", loadSVG);
+    html("build/zoom_reset.svg", function(d) {
+        loadSVG(d, rightDiv, "zoomButton", "0 0 126.308 148.41", 40, 40, () => resetTimelineSpan(timelineSpan));
+    });
+
+    // loadIconSVG("build/steps.svg", leftDiv, 60, 60);
+    // loadIconSVG("build/calories.svg", leftDiv, 50, 50);
+    // loadIconSVG("build/weight_old.svg", leftDiv, 50, 50);
+
+    // html("build/steps.svg", function(d) {
+    //     loadSVG(d, leftDiv, "icon", "0 0 100 125", 60, 60, ()=>{});
+    // });
+    // html("build/calories.svg", function(d) {
+    //     loadSVG(d, leftDiv, "icon", "0 0 100 125", 50, 50, ()=>{});
+    // });
+    // html("build/weight_old.svg", function(d) {
+    //     loadSVG(d, leftDiv, "icon", "0 0 100 125", 50, 50, ()=>{});
+    // });
+
 }
 
 exports.makeTimeline = makeTimeline;

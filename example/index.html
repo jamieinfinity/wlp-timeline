@@ -12,7 +12,7 @@
         }
 
         body {
-            width: 960px;
+            width: auto;
             margin-top: 20px;
             margin-left: auto;
             margin-right: auto;
@@ -61,22 +61,45 @@
             }
         } else {
             data.forEach(function (d) {
-                weightData.push({'timestamp': new Date(d['Date']), 'measurementValue': Number(d['Weight'])});
-                caloriesData.push({'timestamp': new Date(d['Date']), 'measurementValue': Number(d['Calories'])});
-                stepsData.push({'timestamp': new Date(d['Date']), 'measurementValue': Number(d['Steps'])});
+                let tempdate = new Date(d['Date']);
+                let tempdate2 = new Date(tempdate.toDateString());
+                weightData.push({'timestamp': tempdate2, 'measurementValue': Number(d['Weight'])});
+                caloriesData.push({'timestamp': tempdate2, 'measurementValue': Number(d['Calories'])});
+                stepsData.push({'timestamp': tempdate2, 'measurementValue': Number(d['Steps'])});
             });
         }
 
         wlp_timeline.addFeed({
-            'feedInfo': {'feedId': 'steps', 'measurementLabel': 'Steps', 'measurementTimespan': 1, 'measurementMinimum': 0},
+            'feedInfo': {
+                'feedId': 'steps',
+                'measurementLabel': 'Steps',
+                'measurementTimespan': 1,
+                'measurementMinimum': 0,
+                'iconFilename': 'build/steps.svg',
+                'iconSizePx': 60
+            },
             'data': stepsData
         });
         wlp_timeline.addFeed({
-            'feedInfo': {'feedId': 'calories', 'measurementLabel': 'Calories', 'measurementTimespan': 1, 'measurementMinimum': 0},
+            'feedInfo': {
+                'feedId': 'calories',
+                'measurementLabel': 'Calories',
+                'measurementTimespan': 1,
+                'measurementMinimum': 0,
+                'iconFilename': 'build/calories.svg',
+                'iconSizePx': 50
+            },
             'data': caloriesData
         });
         wlp_timeline.addFeed({
-            'feedInfo': {'feedId': 'weight', 'measurementLabel': 'Weight', 'measurementTimespan': 1, 'measurementMinimum': 155},
+            'feedInfo': {
+                'feedId': 'weight',
+                'measurementLabel': 'Weight',
+                'measurementTimespan': 1,
+                'measurementMinimum': 155,
+                'iconFilename': 'build/weight.svg',
+                'iconSizePx': 50
+            },
             'data': weightData
         });
 
