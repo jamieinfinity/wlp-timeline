@@ -6,6 +6,7 @@ import {axisBottom} from "d3-axis";
 import {zoom, zoomIdentity} from "d3-zoom";
 import {html} from "d3-request";
 import {max, extent} from "d3-array";
+import d3Tip from "d3-tip";
 
 const timelineMargin = {top: 20, right: 10, bottom: 30, left: 10},
     timelineSize = {
@@ -17,6 +18,7 @@ const timelineMargin = {top: 20, right: 10, bottom: 30, left: 10},
     feedIndices = {};
 
 let timelineSpan = [new Date('2017-01-01'), new Date('2017-01-02')],
+    prettyDateFormat = timeFormat("%a %b %e, %Y"), // prettyTimestampFormat = timeFormat("%a %b %e, %Y at %_I:%M %p")
     zoomAxis,
     sharedTimeScale,
     sharedTimeScale0,
@@ -25,6 +27,26 @@ let timelineSpan = [new Date('2017-01-01'), new Date('2017-01-02')],
     timelineXAxisWeeks,
     timelineXAxisDayNames,
     timelineXAxisHidden;
+
+
+function makeTooltipHtmlRowSingleColumn(label, text) {
+    let labelcolon = label === '' ? '' : ':';
+    return '<tr>' +
+        '<td>' + label + labelcolon + '</td>' +
+        '<td colspan="4" class="tabcol1"' + '>' + text + '</td>' +
+        '</tr>';
+}
+
+const measurementTooltip = d3Tip()
+        .attr('class', 'd3-tip')
+        .offset([-10, 0])
+        .html(function (d) {
+            return '' +
+                '<table class="tooltiptable">' +
+                    makeTooltipHtmlRowSingleColumn('date', prettyDateFormat(d.timestamp)) +
+                    makeTooltipHtmlRowSingleColumn('value', d.measurementValue) +
+                '</table>';
+        });
 
 function makeTimeTickFormat(millisecond, second, minute, hour, day, week, month, year) {
     return (function (date) {
@@ -105,6 +127,12 @@ function updateFeed(feed) {
 
     measurements.enter().append('rect')
         .attr("fill", "#555") // static attribute applied to newly added data
+        .on('mouseover', function (d) {
+            return measurementTooltip.show(d);
+        })
+        .on('mouseleave', function (d) {
+            return measurementTooltip.hide(d);
+        })
         .merge(measurements)  // merge causes below to be applied to new and existing data
         .attr("x", function (d) {
             return sharedTimeScale(d.timestamp);
@@ -130,29 +158,6 @@ function resetTimelineSpan(timespan) {
             .translate(-sharedTimeScale0(timespan[0]), 0));
 }
 
-function addFeed(feed) {
-    dataFeeds.push(feed);
-
-    loadIconSVG(feed.feedInfo.iconFilename, select('#timelineLeftDiv'), feed.feedInfo.iconSizePx, feed.feedInfo.iconSizePx);
-
-    select('#timelineInner').append('g').attr('id', feed.feedInfo.feedId);
-
-    feedIndices[feed.feedInfo.feedId] = Object.keys(feedIndices).length;
-    const newTimelineSpan = extent(feed.data, d => d.timestamp);
-    timelineSpan = dataFeeds.length === 0 ? newTimelineSpan : [Math.min(timelineSpan[0], newTimelineSpan[0]), Math.max(timelineSpan[1], newTimelineSpan[1])];
-    sharedTimeScale0 = scaleTime().domain(timelineSpan).range([0, timelineSize.width]);
-    resetTimelineSpan(timelineSpan);
-
-    updateFeed(feed);
-}
-
-function zoomed() {
-    const t = event.transform;
-    sharedTimeScale.domain(t.rescaleX(sharedTimeScale0).domain());
-    updateTimeAxes();
-    dataFeeds.forEach(d => updateFeed(d));
-}
-
 function loadSVG(svgData, parentDiv, iconClass, viewBoxString, width, height, onClick) {
     const iconSVG = parentDiv.append("svg")
         .attr("class", iconClass)
@@ -176,6 +181,29 @@ function loadIconSVG(filename, div, width, height) {
     html(filename, function(d) {
         loadSVG(d, div, "icon", "0 0 100 125", width, height, ()=>{});
     });
+}
+
+function addFeed(feed) {
+    dataFeeds.push(feed);
+
+    loadIconSVG(feed.feedInfo.iconFilename, select('#timelineLeftDiv'), feed.feedInfo.iconSizePx, feed.feedInfo.iconSizePx);
+
+    select('#timelineInner').append('g').attr('id', feed.feedInfo.feedId);
+
+    feedIndices[feed.feedInfo.feedId] = Object.keys(feedIndices).length;
+    const newTimelineSpan = extent(feed.data, d => d.timestamp);
+    timelineSpan = dataFeeds.length === 0 ? newTimelineSpan : [Math.min(timelineSpan[0], newTimelineSpan[0]), Math.max(timelineSpan[1], newTimelineSpan[1])];
+    sharedTimeScale0 = scaleTime().domain(timelineSpan).range([0, timelineSize.width]);
+    resetTimelineSpan(timelineSpan);
+
+    updateFeed(feed);
+}
+
+function zoomed() {
+    const t = event.transform;
+    sharedTimeScale.domain(t.rescaleX(sharedTimeScale0).domain());
+    updateTimeAxes();
+    dataFeeds.forEach(d => updateFeed(d));
 }
 
 function makeTimeline(domElementID, width, height) {
@@ -222,7 +250,8 @@ function makeTimeline(domElementID, width, height) {
             .attr("x", timelineMargin.left)
             .attr("y", timelineMargin.top / 2)
             .attr("viewBox", "0 0 " + timelineSize.width + " " + timelineSize.height)
-            .call(zoomAxis),
+            .call(zoomAxis)
+            .call(measurementTooltip),
         svgOuterTimeline = svgRootTimeline.append("g")
             .attr("id", "timelineOuter")
             .attr("pointer-events", "none")
@@ -253,19 +282,6 @@ function makeTimeline(domElementID, width, height) {
         loadSVG(d, rightDiv, "zoomButton", "0 0 126.308 148.41", 40, 40, () => resetTimelineSpan(timelineSpan));
     });
 
-    // loadIconSVG("build/steps.svg", leftDiv, 60, 60);
-    // loadIconSVG("build/calories.svg", leftDiv, 50, 50);
-    // loadIconSVG("build/weight_old.svg", leftDiv, 50, 50);
-
-    // html("build/steps.svg", function(d) {
-    //     loadSVG(d, leftDiv, "icon", "0 0 100 125", 60, 60, ()=>{});
-    // });
-    // html("build/calories.svg", function(d) {
-    //     loadSVG(d, leftDiv, "icon", "0 0 100 125", 50, 50, ()=>{});
-    // });
-    // html("build/weight_old.svg", function(d) {
-    //     loadSVG(d, leftDiv, "icon", "0 0 100 125", 50, 50, ()=>{});
-    // });
 
 }
 
