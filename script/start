@@ -7,4 +7,4 @@ bin_path="$(npm bin)"
 ./script/prepublish
 
 # Run the server
-$bin_path/http-server example/
+$bin_path/http-server -p 8181 example/
