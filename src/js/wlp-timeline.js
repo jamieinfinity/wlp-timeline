@@ -17,7 +17,7 @@ const timelineMargin = {top: 20, right: 10, bottom: 30, left: 10},
     dataFeeds = [],
     feedIndices = {};
 
-let timelineSpan = [new Date('2017-01-01'), new Date('2017-01-02')],
+let timelineSpan = [new Date('2013-01-01'), new Date('2018-01-01')],
     prettyDateFormat = timeFormat("%a %b %e, %Y"), // prettyTimestampFormat = timeFormat("%a %b %e, %Y at %_I:%M %p")
     zoomAxis,
     sharedTimeScale,
@@ -117,33 +117,28 @@ function updateTimeAxes() {
 
 function updateFeed(feed) {
 
-    const refDate = new Date("2010-01-01"),
-        feedHeight = (timelineSize.height - feedPadding) / Object.keys(feedIndices).length - feedPadding,
+    const feedHeight = (timelineSize.height - feedPadding) / Object.keys(feedIndices).length - feedPadding,
         maxMeasurement = max(feed.data, d => d.measurementValue),
         measurementScale = scaleLinear().range([feedHeight, 0]).domain([feed.feedInfo.measurementMinimum, maxMeasurement]),
-        measurements = select('#' + feed.feedInfo.feedId).selectAll('rect').data(feed.data);
-    let measurementWidth = sharedTimeScale(timeDay.offset(refDate)) - sharedTimeScale(refDate);
-    // measurementWidth = (measurementWidth > 1) ? (measurementWidth) : measurementWidth; // half pixel padding if possible
+        measurements = select('#' + feed.feedInfo.feedId).selectAll('circle').data(feed.data);
 
-    measurements.enter().append('rect')
-        .attr("fill", "#555") // static attribute applied to newly added data
-        .on('mouseover', function (d) {
+    measurements.enter().append('circle')
+        .on('mouseover', function (d) { // static attribute applied to newly added data
             return measurementTooltip.show(d);
         })
         .on('mouseleave', function (d) {
             return measurementTooltip.hide(d);
         })
         .merge(measurements)  // merge causes below to be applied to new and existing data
-        .attr("x", function (d) {
+        .attr("fill", d => (d.measurementValue > 1) ? "#666" : "#ccc")
+        .attr("opacity", d => (d.measurementValue > 1) ? 1 : 0.15)
+        .attr("cx", function (d) {
             return sharedTimeScale(d.timestamp);
         })
-        .attr("y", function (d) {
+        .attr("cy", function (d) {
             return measurementScale(d.measurementValue) + feedPadding * (feedIndices[feed.feedInfo.feedId] + 1) + feedHeight * feedIndices[feed.feedInfo.feedId];
         })
-        .attr("width", measurementWidth)
-        .attr("height", function (d) {
-            return feedHeight - measurementScale(d.measurementValue);
-        });
+        .attr("r", 1.5);
     measurements.exit().remove();
 }
 
