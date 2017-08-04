@@ -17220,6 +17220,7 @@ const feedIndices = {};
 
 let timelineSpan = [new Date('2013-01-01'), new Date('2018-01-01')];
 let prettyDateFormat = timeFormat("%a %b %e, %Y");
+let feedHeight = (timelineSize.height - feedPadding) - feedPadding;
 let zoomAxis;
 let sharedTimeScale;
 let sharedTimeScale0;
@@ -17239,15 +17240,15 @@ function makeTooltipHtmlRowSingleColumn(label, text$$1) {
 }
 
 const measurementTooltip = index$1()
-        .attr('class', 'd3-tip')
-        .offset([-10, 0])
-        .html(function (d) {
-            return '' +
-                '<table class="tooltiptable">' +
-                    makeTooltipHtmlRowSingleColumn('date', prettyDateFormat(d.timestamp)) +
-                    makeTooltipHtmlRowSingleColumn('value', d.measurementValue) +
-                '</table>';
-        });
+    .attr('class', 'd3-tip')
+    .offset([-10, 0])
+    .html(function (d) {
+        return '' +
+            '<table class="tooltiptable">' +
+            makeTooltipHtmlRowSingleColumn('date', prettyDateFormat(d.timestamp)) +
+            makeTooltipHtmlRowSingleColumn('value', d.measurementValue > 0. ? d.measurementValue : 'Missing') +
+            '</table>';
+    });
 
 function makeTimeTickFormat(millisecond, second$$1, minute$$1, hour$$1, day$$1, week, month$$1, year$$1) {
     return (function (date) {
@@ -17294,6 +17295,7 @@ function timelineExtentDates() {
         maxDate = sharedTimeScale.invert(timelineSize.width);
     return [minDate, maxDate];
 }
+
 function timelineSpanInDays() {
     let dates = timelineExtentDates();
     return (dates[1].getTime() - dates[0].getTime()) / 1000 / 3600 / 24;
@@ -17318,10 +17320,23 @@ function updateTimeAxes() {
 
 function updateFeed(feed) {
 
-    const feedHeight = (timelineSize.height - feedPadding) / Object.keys(feedIndices).length - feedPadding,
-        maxMeasurement = max(feed.data, d => d.measurementValue),
+    const maxMeasurement = max(feed.data, d => d.measurementValue),
+        yBase = feedPadding * (feedIndices[feed.feedInfo.feedId] + 1) + feedHeight * feedIndices[feed.feedInfo.feedId],
+        dataY = [yBase + feedHeight],
         measurementScale = linear().range([feedHeight, 0]).domain([feed.feedInfo.measurementMinimum, maxMeasurement]),
+        baseLine = select("#timelineInner").selectAll('line.baseline_' + feed.feedInfo.feedId).data(dataY),
         measurements = select('#' + feed.feedInfo.feedId).selectAll('circle').data(feed.data);
+
+    baseLine.enter().append('line')
+        .attr('class', 'baseline_' + feed.feedInfo.feedId)
+        .attr("x1", 0)
+        .attr("x2", timelineSize.width)
+        .attr("stroke", "#ccc")
+        .attr("stroke-width", 1)
+        .merge(baseLine)
+        .attr("y1", d=>d)
+        .attr("y2", d=>d);
+    baseLine.exit().remove();
 
     measurements.enter().append('circle')
         .on('mouseover', function (d) { // static attribute applied to newly added data
@@ -17331,16 +17346,17 @@ function updateFeed(feed) {
             return measurementTooltip.hide(d);
         })
         .merge(measurements)  // merge causes below to be applied to new and existing data
-        .attr("fill", d => (d.measurementValue > 1) ? "#666" : "#ccc")
-        .attr("opacity", d => (d.measurementValue > 1) ? 1 : 0.15)
+        .attr("fill", d => (d.measurementValue > 0.) ? "#666" : "#666")
+        .attr("opacity", d => (d.measurementValue > 0.) ? 1 : 0.1)
         .attr("cx", function (d) {
             return sharedTimeScale(d.timestamp);
         })
         .attr("cy", function (d) {
-            return measurementScale(d.measurementValue) + feedPadding * (feedIndices[feed.feedInfo.feedId] + 1) + feedHeight * feedIndices[feed.feedInfo.feedId];
+            return measurementScale(d.measurementValue) + yBase;
         })
-        .attr("r", 1.5);
+        .attr("r", d => (d.measurementValue > 0.) ? 1.5 : 1);
     measurements.exit().remove();
+
 }
 
 // https://github.com/d3/d3-zoom
@@ -17374,8 +17390,9 @@ function loadSVG(svgData, parentDiv, iconClass, viewBoxString, width, height, on
 }
 
 function loadIconSVG(filename, div, width, height) {
-    html(filename, function(d) {
-        loadSVG(d, div, "icon", "0 0 100 125", width, height, ()=>{});
+    html(filename, function (d) {
+        loadSVG(d, div, "icon", "0 0 100 125", width, height, () => {
+        });
     });
 }
 
@@ -17391,6 +17408,8 @@ function addFeed(feed) {
     timelineSpan = dataFeeds.length === 0 ? newTimelineSpan : [Math.min(timelineSpan[0], newTimelineSpan[0]), Math.max(timelineSpan[1], newTimelineSpan[1])];
     sharedTimeScale0 = scaleTime().domain(timelineSpan).range([0, timelineSize.width]);
     resetTimelineSpan(timelineSpan);
+
+    feedHeight = (timelineSize.height - feedPadding) / Object.keys(feedIndices).length - feedPadding;
 
     updateFeed(feed);
 }
@@ -17414,12 +17433,12 @@ function makeTimeline(domElementID, width, height) {
         .on("zoom", zoomed);
 
     const container = select(domElementID).append("div")
-            .attr("id", "timelineContainer");
+        .attr("id", "timelineContainer");
 
-        container.append("div")
-            .attr("id", "timelineLeftDiv")
-            .style("margin-top", 22 + "px")
-            .style("margin-bottom", 30 + "px");
+    container.append("div")
+        .attr("id", "timelineLeftDiv")
+        .style("margin-top", 22 + "px")
+        .style("margin-bottom", 30 + "px");
 
     const root = container.append("div")
             .attr("id", "timelineRootDiv"),
@@ -17453,8 +17472,6 @@ function makeTimeline(domElementID, width, height) {
             .attr("pointer-events", "none")
             .attr("transform", "translate(" + timelineMargin.left + "," + timelineMargin.top / 2 + ")");
 
-
-
     setUpCommonTimeAxis();
 
     appendAxisGroup(svgAxesTimeline, timelineXAxisMain, "axis-x main-axis", timelineSize.height);
@@ -17474,7 +17491,7 @@ function makeTimeline(domElementID, width, height) {
         .attr("width", timelineSize.width)
         .attr("height", timelineSize.height);
 
-    html("build/zoom_reset.svg", function(d) {
+    html("build/zoom_reset.svg", function (d) {
         loadSVG(d, rightDiv, "zoomButton", "0 0 126.308 148.41", 40, 40, () => resetTimelineSpan(timelineSpan));
     });
 
