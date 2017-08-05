@@ -17209,7 +17209,7 @@ var index$1 = createCommonjsModule(function (module) {
 }));
 });
 
-const timelineMargin = {top: 20, right: 10, bottom: 30, left: 10};
+const timelineMargin = {top: 0, right: 15, bottom: 30, left: 80};
 const timelineSize = {
         height: 0,
         width: 0
@@ -17218,7 +17218,7 @@ const feedPadding = 7;
 const dataFeeds = [];
 const feedIndices = {};
 
-let timelineSpan = [new Date('2013-01-01'), new Date('2018-01-01')];
+let timelineSpan = [new Date('2012-07-01'), new Date('2018-07-01')];
 let prettyDateFormat = timeFormat("%a %b %e, %Y");
 let feedHeight = (timelineSize.height - feedPadding) - feedPadding;
 let zoomAxis;
@@ -17322,21 +17322,31 @@ function updateFeed(feed) {
 
     const maxMeasurement = max(feed.data, d => d.measurementValue),
         yBase = feedPadding * (feedIndices[feed.feedInfo.feedId] + 1) + feedHeight * feedIndices[feed.feedInfo.feedId],
-        dataY = [yBase + feedHeight],
+        baselineDataY = [yBase + feedHeight],
         measurementScale = linear().range([feedHeight, 0]).domain([feed.feedInfo.measurementMinimum, maxMeasurement]),
-        baseLine = select("#timelineInner").selectAll('line.baseline_' + feed.feedInfo.feedId).data(dataY),
+        baseLine = select('#' + feed.feedInfo.feedId).selectAll('line.baseline').data(baselineDataY),
+        label = select('#label'+feed.feedInfo.feedId).selectAll('text').data(baselineDataY),
         measurements = select('#' + feed.feedInfo.feedId).selectAll('circle').data(feed.data);
 
     baseLine.enter().append('line')
-        .attr('class', 'baseline_' + feed.feedInfo.feedId)
+        .attr('class', 'baseline')
         .attr("x1", 0)
         .attr("x2", timelineSize.width)
         .attr("stroke", "#ccc")
         .attr("stroke-width", 1)
         .merge(baseLine)
-        .attr("y1", d=>d)
-        .attr("y2", d=>d);
+        .attr("y1", d => d)
+        .attr("y2", d => d);
     baseLine.exit().remove();
+
+    label.enter().append('text')
+        .attr('class', 'feedLabel')
+        .attr('text-anchor', 'end')
+        .attr("x", -15)
+        .merge(label)
+        .attr("y", d => (d-feedHeight*0.5))
+        .text(feed.feedInfo.measurementLabel);
+    label.exit().remove();
 
     measurements.enter().append('circle')
         .on('mouseover', function (d) { // static attribute applied to newly added data
@@ -17347,14 +17357,14 @@ function updateFeed(feed) {
         })
         .merge(measurements)  // merge causes below to be applied to new and existing data
         .attr("fill", d => (d.measurementValue > 0.) ? "#666" : "#666")
-        .attr("opacity", d => (d.measurementValue > 0.) ? 1 : 0.1)
+        .attr("opacity", d => (d.measurementValue > 0.) ? 1 : 0.85)
         .attr("cx", function (d) {
             return sharedTimeScale(d.timestamp);
         })
         .attr("cy", function (d) {
             return measurementScale(d.measurementValue) + yBase;
         })
-        .attr("r", d => (d.measurementValue > 0.) ? 1.5 : 1);
+        .attr("r", d => (d.measurementValue > 0.) ? 1.5 : 0.5);
     measurements.exit().remove();
 
 }
@@ -17389,19 +17399,19 @@ function loadSVG(svgData, parentDiv, iconClass, viewBoxString, width, height, on
     iconSVG.on("click", onClick);
 }
 
-function loadIconSVG(filename, div, width, height) {
-    html(filename, function (d) {
-        loadSVG(d, div, "icon", "0 0 100 125", width, height, () => {
-        });
-    });
-}
+// This was used to place feed icons, no longer needed
+// function loadIconSVG(filename, div, width, height) {
+//     html(filename, function (d) {
+//         loadSVG(d, div, "icon", "0 0 100 125", width, height, () => {
+//         });
+//     });
+// }
 
 function addFeed(feed) {
     dataFeeds.push(feed);
 
-    loadIconSVG(feed.feedInfo.iconFilename, select('#timelineLeftDiv'), feed.feedInfo.iconSizePx, feed.feedInfo.iconSizePx);
-
     select('#timelineInner').append('g').attr('id', feed.feedInfo.feedId);
+    select('#timelineOuter').append('g').attr('id', 'label'+feed.feedInfo.feedId);
 
     feedIndices[feed.feedInfo.feedId] = Object.keys(feedIndices).length;
     const newTimelineSpan = extent(feed.data, d => d.timestamp);
@@ -17432,19 +17442,12 @@ function makeTimeline(domElementID, width, height) {
         .extent([[0, 0], [timelineSize.width, timelineSize.height]])
         .on("zoom", zoomed);
 
-    const container = select(domElementID).append("div")
-        .attr("id", "timelineContainer");
-
-    container.append("div")
-        .attr("id", "timelineLeftDiv")
-        .style("margin-top", 22 + "px")
-        .style("margin-bottom", 30 + "px");
-
-    const root = container.append("div")
+    const container = select(domElementID).append("div").attr("id", "timelineContainer"),
+        root = container.append("div")
             .attr("id", "timelineRootDiv"),
         rightDiv = container.append("div")
             .attr("id", "timelineRightDiv")
-            .style("margin-top", 22 + "px")
+            .style("margin-top", 0 + "px")
             .style("margin-bottom", 30 + "px"),
 
         svgRootTimeline = root.append("svg")
@@ -17492,9 +17495,8 @@ function makeTimeline(domElementID, width, height) {
         .attr("height", timelineSize.height);
 
     html("build/zoom_reset.svg", function (d) {
-        loadSVG(d, rightDiv, "zoomButton", "0 0 126.308 148.41", 40, 40, () => resetTimelineSpan(timelineSpan));
+        loadSVG(d, rightDiv, "zoomButton", "0 0 126.308 148.41", 20, 20, () => resetTimelineSpan(timelineSpan));
     });
-
 
 }
 
