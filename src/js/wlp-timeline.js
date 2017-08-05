@@ -300,4 +300,4 @@ function makeTimeline(domElementID, width, height) {
 }
 
 
-export {makeTimeline, addFeed};
+export {makeTimeline, addFeed, resetTimelineSpan};

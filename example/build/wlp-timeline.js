@@ -17502,6 +17502,7 @@ function makeTimeline(domElementID, width, height) {
 
 exports.makeTimeline = makeTimeline;
 exports.addFeed = addFeed;
+exports.resetTimelineSpan = resetTimelineSpan;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 

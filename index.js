@@ -1,1 +1,1 @@
-export { makeTimeline, addFeed } from './src/js/wlp-timeline';
+export { makeTimeline, addFeed, resetTimelineSpan } from './src/js/wlp-timeline';
