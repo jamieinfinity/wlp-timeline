@@ -4,11 +4,11 @@ import {timeFormat} from "d3-time-format";
 import {timeSecond, timeMinute, timeHour, timeDay, timeWeek, timeMonth, timeYear} from "d3-time";
 import {axisBottom} from "d3-axis";
 import {zoom, zoomIdentity} from "d3-zoom";
-import {html} from "d3-request";
+// import {html} from "d3-request";
 import {max, extent} from "d3-array";
 import d3Tip from "d3-tip";
 
-const timelineMargin = {top: 0, right: 15, bottom: 30, left: 80},
+const timelineMargin = {top: 5, right: 15, bottom: 30, left: 80},
     timelineSize = {
         height: 0,
         width: 0
@@ -179,24 +179,24 @@ function resetTimelineSpan(timespan) {
             .translate(-sharedTimeScale0(timespan[0]), 0));
 }
 
-function loadSVG(svgData, parentDiv, iconClass, viewBoxString, width, height, onClick) {
-    const iconSVG = parentDiv.append("svg")
-        .attr("class", iconClass)
-        .attr("x", 0)
-        .attr("y", 0)
-        .attr("width", width)
-        .attr("height", height)
-        .attr("viewBox", viewBoxString);
-    select(svgData).selectAll("path").each(function () {
-        let node = iconSVG.node();
-        node.appendChild(this.cloneNode(true));
-    });
-    select(svgData).selectAll("ellipse").each(function () {
-        let node = iconSVG.node();
-        node.appendChild(this.cloneNode(true));
-    });
-    iconSVG.on("click", onClick);
-}
+// function loadSVG(svgData, parentDiv, iconClass, viewBoxString, width, height, onClick) {
+//     const iconSVG = parentDiv.append("svg")
+//         .attr("class", iconClass)
+//         .attr("x", 0)
+//         .attr("y", 0)
+//         .attr("width", width)
+//         .attr("height", height)
+//         .attr("viewBox", viewBoxString);
+//     select(svgData).selectAll("path").each(function () {
+//         let node = iconSVG.node();
+//         node.appendChild(this.cloneNode(true));
+//     });
+//     select(svgData).selectAll("ellipse").each(function () {
+//         let node = iconSVG.node();
+//         node.appendChild(this.cloneNode(true));
+//     });
+//     iconSVG.on("click", onClick);
+// }
 
 // This was used to place feed icons, no longer needed
 // function loadIconSVG(filename, div, width, height) {
@@ -244,11 +244,10 @@ function makeTimeline(domElementID, width, height) {
     const container = select(domElementID).append("div").attr("id", "timelineContainer"),
         root = container.append("div")
             .attr("id", "timelineRootDiv"),
-        rightDiv = container.append("div")
-            .attr("id", "timelineRightDiv")
-            .style("margin-top", 0 + "px")
-            .style("margin-bottom", 30 + "px"),
-
+        // rightDiv = container.append("div")
+        //     .attr("id", "timelineRightDiv")
+        //     .style("margin-top", 0 + "px")
+        //     .style("margin-bottom", 30 + "px"),
         svgRootTimeline = root.append("svg")
             .attr("id", "timelineRootSVG")
             .attr("width", timelineSize.width + timelineMargin.left + timelineMargin.right)
@@ -293,9 +292,9 @@ function makeTimeline(domElementID, width, height) {
         .attr("width", timelineSize.width)
         .attr("height", timelineSize.height);
 
-    html("build/zoom_reset.svg", function (d) {
-        loadSVG(d, rightDiv, "zoomButton", "0 0 126.308 148.41", 20, 20, () => resetTimelineSpan(timelineSpan));
-    });
+    // html("build/zoom_reset.svg", function (d) {
+    //     loadSVG(d, rightDiv, "zoomButton", "0 0 126.308 148.41", 20, 20, () => resetTimelineSpan(timelineSpan));
+    // });
 
 }
 
