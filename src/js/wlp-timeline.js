@@ -4,9 +4,9 @@ import {timeFormat} from "d3-time-format";
 import {timeSecond, timeMinute, timeHour, timeDay, timeWeek, timeMonth, timeYear} from "d3-time";
 import {axisBottom} from "d3-axis";
 import {zoom, zoomIdentity} from "d3-zoom";
-// import {html} from "d3-request";
 import {max, extent} from "d3-array";
 import d3Tip from "d3-tip";
+// import {html} from "d3-request";
 
 const timelineMargin = {top: 5, right: 15, bottom: 30, left: 80},
     timelineSize = {
@@ -38,16 +38,16 @@ function makeTooltipHtmlRowSingleColumn(label, text) {
         '</tr>';
 }
 
+// eslint-disable-next-line
 const measurementTooltip = d3Tip()
     .attr('class', 'd3-tip')
     .offset([-10, 0])
-    .html(function (d) {
-        return '' +
+    .html(d => ('' +
             '<table class="tooltiptable">' +
             makeTooltipHtmlRowSingleColumn('date', prettyDateFormat(d.timestamp)) +
             makeTooltipHtmlRowSingleColumn('value', d.measurementValue > 0. ? d.measurementValue : 'Missing') +
-            '</table>';
-    });
+            '</table>')
+    );
 
 function makeTimeTickFormat(millisecond, second, minute, hour, day, week, month, year) {
     return (function (date) {

@@ -17240,16 +17240,16 @@ function makeTooltipHtmlRowSingleColumn(label, text) {
         '</tr>';
 }
 
+// eslint-disable-next-line
 const measurementTooltip = index$1()
     .attr('class', 'd3-tip')
     .offset([-10, 0])
-    .html(function (d) {
-        return '' +
+    .html(d => ('' +
             '<table class="tooltiptable">' +
             makeTooltipHtmlRowSingleColumn('date', prettyDateFormat(d.timestamp)) +
             makeTooltipHtmlRowSingleColumn('value', d.measurementValue > 0. ? d.measurementValue : 'Missing') +
-            '</table>';
-    });
+            '</table>')
+    );
 
 function makeTimeTickFormat(millisecond, second$$1, minute$$1, hour$$1, day$$1, week, month$$1, year$$1) {
     return (function (date) {
