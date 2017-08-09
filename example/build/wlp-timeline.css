@@ -34,11 +34,22 @@
     text-transform: uppercase;
 }
 
+.axis-y path,
+.axis-y line {
+    /*fill: none;*/
+    stroke-width: 1;
+    stroke: #ddd;
+}
+.axis-y text {
+    fill: #ccc;
+    font-size: 8px;
+}
+
 .axis-x path,
 .axis-x line {
     fill: none;
     stroke-width: 1;
-    stroke: #ddd;
+    stroke: #f2f2f2;
 }
 
 .axis-x.main-axis text {
@@ -51,14 +62,14 @@
 
 .axis-x.days-axis path,
 .axis-x.days-axis line {
-    stroke-width: 2;
-    stroke: #ddd;
+    stroke-width: 1;
+    stroke: #f2f2f2;
 }
 
 .axis-x.weeks-axis path,
 .axis-x.weeks-axis line {
-    stroke-width: 2;
-    stroke: #999;
+    stroke-width: 1;
+    stroke: #ddd;
 }
 
 svg.icon {

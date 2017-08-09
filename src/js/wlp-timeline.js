@@ -2,18 +2,18 @@ import {select, event} from "d3-selection";
 import {scaleLinear, scaleTime} from "d3-scale";
 import {timeFormat} from "d3-time-format";
 import {timeSecond, timeMinute, timeHour, timeDay, timeWeek, timeMonth, timeYear} from "d3-time";
-import {axisBottom} from "d3-axis";
+import {axisBottom, axisLeft} from "d3-axis";
 import {zoom, zoomIdentity} from "d3-zoom";
 import {max, extent} from "d3-array";
 import d3Tip from "d3-tip";
 // import {html} from "d3-request";
 
-const timelineMargin = {top: 5, right: 15, bottom: 30, left: 80},
+const timelineMargin = {top: 5, right: 15, bottom: 30, left: 110},
     timelineSize = {
         height: 0,
         width: 0
     },
-    feedPadding = 7,
+    feedPadding = 20,
     dataFeeds = [],
     feedIndices = {};
 
@@ -43,10 +43,10 @@ const measurementTooltip = d3Tip()
     .attr('class', 'd3-tip')
     .offset([-10, 0])
     .html(d => ('' +
-            '<table class="tooltiptable">' +
-            makeTooltipHtmlRowSingleColumn('date', prettyDateFormat(d.timestamp)) +
-            makeTooltipHtmlRowSingleColumn('value', d.measurementValue > 0. ? d.measurementValue : 'Missing') +
-            '</table>')
+        '<table class="tooltiptable">' +
+        makeTooltipHtmlRowSingleColumn('date', prettyDateFormat(d.timestamp)) +
+        makeTooltipHtmlRowSingleColumn('value', d.measurementValue > 0. ? d.measurementValue : 'Missing') +
+        '</table>')
     );
 
 function makeTimeTickFormat(millisecond, second, minute, hour, day, week, month, year) {
@@ -121,17 +121,24 @@ function updateFeed(feed) {
 
     const maxMeasurement = max(feed.data, d => d.measurementValue),
         yBase = feedPadding * (feedIndices[feed.feedInfo.feedId] + 1) + feedHeight * feedIndices[feed.feedInfo.feedId],
-        baselineDataY = [yBase + feedHeight],
+        baselineDataY = [yBase, yBase + feedHeight],
+        labelData = [yBase + feedHeight],
         measurementScale = scaleLinear().range([feedHeight, 0]).domain([feed.feedInfo.measurementMinimum, maxMeasurement]),
         baseLine = select('#' + feed.feedInfo.feedId).selectAll('line.baseline').data(baselineDataY),
-        label = select('#label'+feed.feedInfo.feedId).selectAll('text').data(baselineDataY),
-        measurements = select('#' + feed.feedInfo.feedId).selectAll('circle').data(feed.data);
+        label = select('#label' + feed.feedInfo.feedId).selectAll('text').data(labelData),
+        measurements = select('#' + feed.feedInfo.feedId).selectAll('circle').data(feed.data),
+        yAxis = select("#yAxis" + feed.feedInfo.feedId),
+        yAxisSettings = axisLeft(measurementScale)
+            .tickSize(-4)
+            // .tickFormat(format)
+            .ticks(5)
+            .tickPadding(5);
 
     baseLine.enter().append('line')
         .attr('class', 'baseline')
         .attr("x1", 0)
         .attr("x2", timelineSize.width)
-        .attr("stroke", "#ccc")
+        .attr("stroke", "#eee")
         .attr("stroke-width", 1)
         .merge(baseLine)
         .attr("y1", d => d)
@@ -141,9 +148,9 @@ function updateFeed(feed) {
     label.enter().append('text')
         .attr('class', 'feedLabel')
         .attr('text-anchor', 'end')
-        .attr("x", -15)
+        .attr("x", -40)
         .merge(label)
-        .attr("y", d => (d-feedHeight*0.5))
+        .attr("y", d => (d - feedHeight * 0.5))
         .text(feed.feedInfo.measurementLabel);
     label.exit().remove();
 
@@ -166,6 +173,11 @@ function updateFeed(feed) {
         .attr("r", d => (d.measurementValue > 0.) ? 1.5 : 0.5);
     measurements.exit().remove();
 
+    yAxis.attr("transform", "translate(" + timelineMargin.left + "," + (timelineMargin.top / 2 + yBase) + ")");
+
+    yAxis.select("g.axis-y")
+        .call(yAxisSettings);
+
 }
 
 // https://github.com/d3/d3-zoom
@@ -179,46 +191,28 @@ function resetTimelineSpan(timespan) {
             .translate(-sharedTimeScale0(timespan[0]), 0));
 }
 
-// function loadSVG(svgData, parentDiv, iconClass, viewBoxString, width, height, onClick) {
-//     const iconSVG = parentDiv.append("svg")
-//         .attr("class", iconClass)
-//         .attr("x", 0)
-//         .attr("y", 0)
-//         .attr("width", width)
-//         .attr("height", height)
-//         .attr("viewBox", viewBoxString);
-//     select(svgData).selectAll("path").each(function () {
-//         let node = iconSVG.node();
-//         node.appendChild(this.cloneNode(true));
-//     });
-//     select(svgData).selectAll("ellipse").each(function () {
-//         let node = iconSVG.node();
-//         node.appendChild(this.cloneNode(true));
-//     });
-//     iconSVG.on("click", onClick);
-// }
-
-// This was used to place feed icons, no longer needed
-// function loadIconSVG(filename, div, width, height) {
-//     html(filename, function (d) {
-//         loadSVG(d, div, "icon", "0 0 100 125", width, height, () => {
-//         });
-//     });
-// }
-
 function addFeed(feed) {
     dataFeeds.push(feed);
 
+    const newTimelineSpan = extent(feed.data, d => d.timestamp),
+        yAxis = select("#timelineRootSVG").append("g");
+
     select('#timelineInner').append('g').attr('id', feed.feedInfo.feedId);
-    select('#timelineOuter').append('g').attr('id', 'label'+feed.feedInfo.feedId);
+    select('#timelineOuter').append('g').attr('id', 'label' + feed.feedInfo.feedId);
 
     feedIndices[feed.feedInfo.feedId] = Object.keys(feedIndices).length;
-    const newTimelineSpan = extent(feed.data, d => d.timestamp);
     timelineSpan = dataFeeds.length === 0 ? newTimelineSpan : [Math.min(timelineSpan[0], newTimelineSpan[0]), Math.max(timelineSpan[1], newTimelineSpan[1])];
     sharedTimeScale0 = scaleTime().domain(timelineSpan).range([0, timelineSize.width]);
     resetTimelineSpan(timelineSpan);
 
     feedHeight = (timelineSize.height - feedPadding) / Object.keys(feedIndices).length - feedPadding;
+
+    yAxis
+        .attr("id", "yAxis" + feed.feedInfo.feedId)
+        .attr("pointer-events", "none");
+
+    yAxis.append("g")
+        .attr("class", "axis-y");
 
     updateFeed(feed);
 }
@@ -244,10 +238,6 @@ function makeTimeline(domElementID, width, height) {
     const container = select(domElementID).append("div").attr("id", "timelineContainer"),
         root = container.append("div")
             .attr("id", "timelineRootDiv"),
-        // rightDiv = container.append("div")
-        //     .attr("id", "timelineRightDiv")
-        //     .style("margin-top", 0 + "px")
-        //     .style("margin-bottom", 30 + "px"),
         svgRootTimeline = root.append("svg")
             .attr("id", "timelineRootSVG")
             .attr("width", timelineSize.width + timelineMargin.left + timelineMargin.right)
@@ -291,10 +281,6 @@ function makeTimeline(domElementID, width, height) {
         .attr("id", "outertimelinebackground")
         .attr("width", timelineSize.width)
         .attr("height", timelineSize.height);
-
-    // html("build/zoom_reset.svg", function (d) {
-    //     loadSVG(d, rightDiv, "zoomButton", "0 0 126.308 148.41", 20, 20, () => resetTimelineSpan(timelineSpan));
-    // });
 
 }
 
