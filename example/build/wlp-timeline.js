@@ -17211,7 +17211,7 @@ var index$1 = createCommonjsModule(function (module) {
 
 // import {html} from "d3-request";
 
-const timelineMargin = {top: 5, right: 15, bottom: 30, left: 110};
+const timelineMargin = {top: 5, right: 15, bottom: 30, left: 90};
 const timelineSize = {
         height: 0,
         width: 0
@@ -17271,9 +17271,9 @@ function appendAxisGroup(selection$$1, timeAxis, axisPath, yOffset) {
         .call(timeAxis);
 }
 
-function makeTimelineAxis(scale, format, size, padding) {
+function makeTimelineAxis(scale, format$$1, size, padding) {
     return axisBottom(scale)
-        .tickFormat(format)
+        .tickFormat(format$$1)
         .tickSize(size)
         .tickPadding(padding);
 }
@@ -17323,6 +17323,7 @@ function updateTimeAxes() {
 function updateFeed(feed) {
 
     const maxMeasurement = max(feed.data, d => d.measurementValue),
+        yTickFormat = (maxMeasurement > 1000) ? ".1s" : ".3",
         yBase = feedPadding * (feedIndices[feed.feedInfo.feedId] + 1) + feedHeight * feedIndices[feed.feedInfo.feedId],
         baselineDataY = [yBase, yBase + feedHeight],
         labelData = [yBase + feedHeight],
@@ -17333,7 +17334,7 @@ function updateFeed(feed) {
         yAxis = select("#yAxis" + feed.feedInfo.feedId),
         yAxisSettings = axisLeft(measurementScale)
             .tickSize(-4)
-            // .tickFormat(format)
+            .tickFormat(format(yTickFormat))
             .ticks(5)
             .tickPadding(5);
 
@@ -17351,7 +17352,7 @@ function updateFeed(feed) {
     label.enter().append('text')
         .attr('class', 'feedLabel')
         .attr('text-anchor', 'end')
-        .attr("x", -40)
+        .attr("x", -30)
         .merge(label)
         .attr("y", d => (d - feedHeight * 0.5))
         .text(feed.feedInfo.measurementLabel);

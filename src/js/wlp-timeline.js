@@ -1,5 +1,6 @@
 import {select, event} from "d3-selection";
 import {scaleLinear, scaleTime} from "d3-scale";
+import {format} from "d3-format";
 import {timeFormat} from "d3-time-format";
 import {timeSecond, timeMinute, timeHour, timeDay, timeWeek, timeMonth, timeYear} from "d3-time";
 import {axisBottom, axisLeft} from "d3-axis";
@@ -8,7 +9,7 @@ import {max, extent} from "d3-array";
 import d3Tip from "d3-tip";
 // import {html} from "d3-request";
 
-const timelineMargin = {top: 5, right: 15, bottom: 30, left: 110},
+const timelineMargin = {top: 5, right: 15, bottom: 30, left: 90},
     timelineSize = {
         height: 0,
         width: 0
@@ -120,6 +121,7 @@ function updateTimeAxes() {
 function updateFeed(feed) {
 
     const maxMeasurement = max(feed.data, d => d.measurementValue),
+        yTickFormat = (maxMeasurement > 1000) ? ".1s" : ".3",
         yBase = feedPadding * (feedIndices[feed.feedInfo.feedId] + 1) + feedHeight * feedIndices[feed.feedInfo.feedId],
         baselineDataY = [yBase, yBase + feedHeight],
         labelData = [yBase + feedHeight],
@@ -130,7 +132,7 @@ function updateFeed(feed) {
         yAxis = select("#yAxis" + feed.feedInfo.feedId),
         yAxisSettings = axisLeft(measurementScale)
             .tickSize(-4)
-            // .tickFormat(format)
+            .tickFormat(format(yTickFormat))
             .ticks(5)
             .tickPadding(5);
 
@@ -148,7 +150,7 @@ function updateFeed(feed) {
     label.enter().append('text')
         .attr('class', 'feedLabel')
         .attr('text-anchor', 'end')
-        .attr("x", -40)
+        .attr("x", -30)
         .merge(label)
         .attr("y", d => (d - feedHeight * 0.5))
         .text(feed.feedInfo.measurementLabel);
