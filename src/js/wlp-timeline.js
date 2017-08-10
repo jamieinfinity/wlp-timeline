@@ -128,7 +128,7 @@ function updateFeed(feed) {
         measurementScale = scaleLinear().range([feedHeight, 0]).domain([feed.feedInfo.measurementMinimum, maxMeasurement]),
         baseLine = select('#' + feed.feedInfo.feedId).selectAll('line.baseline').data(baselineDataY),
         label = select('#label' + feed.feedInfo.feedId).selectAll('text').data(labelData),
-        measurements = select('#' + feed.feedInfo.feedId).selectAll('circle').data(feed.data),
+        measurements = select('#' + feed.feedInfo.feedId).selectAll('circle').data(feed.data.filter(d => (d.measurementValue > feed.feedInfo.measurementMinimum))),
         yAxis = select("#yAxis" + feed.feedInfo.feedId),
         yAxisSettings = axisLeft(measurementScale)
             .tickSize(-4)
