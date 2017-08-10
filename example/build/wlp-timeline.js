@@ -17319,18 +17319,24 @@ function updateTimeAxes() {
     resetTimeAxis(".axis-x.weeks-axis", timelineXAxisWeeks, 60);
 }
 
+function filterByDateRange(d) {
+    const timelineMinMax = timelineExtentDates();
+    return d.timestamp > timelineMinMax[0] && d.timestamp < timelineMinMax[1];
+}
 
 function updateFeed(feed) {
 
-    const maxMeasurement = max(feed.data, d => d.measurementValue),
-        yTickFormat = (maxMeasurement > 1000) ? ".1s" : ".3",
+    const filteredData = feed.data.filter(d => (filterByDateRange(d) && d.measurementValue > 0)),
+        maxMeasurement = max(filteredData, d => d.measurementValue),
+        minMeasurement = min(filteredData, d => d.measurementValue),
+        yTickFormat = (maxMeasurement > 1000) ? "1.5s" : ".3",
         yBase = feedPadding * (feedIndices[feed.feedInfo.feedId] + 1) + feedHeight * feedIndices[feed.feedInfo.feedId],
         baselineDataY = [yBase, yBase + feedHeight],
         labelData = [yBase + feedHeight],
-        measurementScale = linear().range([feedHeight, 0]).domain([feed.feedInfo.measurementMinimum, maxMeasurement]),
+        measurementScale = linear().range([feedHeight, 0]).domain([minMeasurement, maxMeasurement]),
         baseLine = select('#' + feed.feedInfo.feedId).selectAll('line.baseline').data(baselineDataY),
         label = select('#label' + feed.feedInfo.feedId).selectAll('text').data(labelData),
-        measurements = select('#' + feed.feedInfo.feedId).selectAll('circle').data(feed.data.filter(d => (d.measurementValue > feed.feedInfo.measurementMinimum))),
+        measurements = select('#' + feed.feedInfo.feedId).selectAll('circle').data(filteredData),
         yAxis = select("#yAxis" + feed.feedInfo.feedId),
         yAxisSettings = axisLeft(measurementScale)
             .tickSize(-4)
