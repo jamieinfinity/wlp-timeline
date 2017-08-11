@@ -29,8 +29,11 @@
     wlp_timeline.makeTimeline("#rootdiv", 800, 500, feed=>{});
 
     const weightData = [];
+    const weightTrendData = [];
     const caloriesData = [];
+    const caloriesTrendData = [];
     const stepsData = [];
+    const stepsTrendData = [];
 
     d3.csv('./fitness_data.csv', function (error, data) {
 
@@ -64,8 +67,11 @@
                 let tempdate = new Date(d['Date']);
                 let tempdate2 = new Date(tempdate.toDateString());
                 weightData.push({'timestamp': tempdate2, 'measurementValue': Number(d['Weight'])});
+                weightTrendData.push({'timestamp': tempdate2, 'measurementValue': Number(d['WeightSmoothed7Days'])});
                 caloriesData.push({'timestamp': tempdate2, 'measurementValue': Number(d['Calories'])});
+                caloriesTrendData.push({'timestamp': tempdate2, 'measurementValue': Number(d['CaloriesSmoothed7Days'])});
                 stepsData.push({'timestamp': tempdate2, 'measurementValue': Number(d['Steps'])});
+                stepsTrendData.push({'timestamp': tempdate2, 'measurementValue': Number(d['StepsSmoothed7Days'])});
             });
         }
 
@@ -76,7 +82,8 @@
                 'measurementTimespan': 1,
                 'measurementMinimum': 3000,
             },
-            'data': stepsData
+            'data': stepsData,
+            'trendData': stepsTrendData
         });
         wlp_timeline.addFeed({
             'feedInfo': {
@@ -85,7 +92,8 @@
                 'measurementTimespan': 1,
                 'measurementMinimum': 1000,
             },
-            'data': caloriesData
+            'data': caloriesData,
+            'trendData': caloriesTrendData
         });
         wlp_timeline.addFeed({
             'feedInfo': {
@@ -94,7 +102,8 @@
                 'measurementTimespan': 1,
                 'measurementMinimum': 160,
             },
-            'data': weightData
+            'data': weightData,
+            'trendData': weightTrendData
         });
 
     });

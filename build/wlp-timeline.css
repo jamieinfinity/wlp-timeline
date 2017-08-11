@@ -26,12 +26,23 @@
     stroke-width: 3;
 }
 
-circle.selected {
-    fill: #dfdfdf;
+#timelineInner circle.selected {
+    fill: #cfcfcf;
 }
 
-circle {
-    fill: #efefef;
+#timelineInner circle {
+    fill: #ececec;
+    r: 2;
+}
+
+#timelineInner path.selected {
+    stroke: #6a6a6a;
+}
+
+#timelineInner path {
+    fill: none;
+    stroke: #bbb;
+    stroke-width: 2px;
 }
 
 .feedLabel:hover {

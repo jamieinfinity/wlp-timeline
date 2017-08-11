@@ -1,5 +1,6 @@
 import {select, event} from "d3-selection";
 import {scaleLinear, scaleTime} from "d3-scale";
+import {line, curveLinear} from "d3-shape";
 import {format} from "d3-format";
 import {timeFormat} from "d3-time-format";
 import {timeSecond, timeMinute, timeHour, timeDay, timeWeek, timeMonth, timeYear} from "d3-time";
@@ -21,6 +22,7 @@ const timelineMargin = {top: 5, right: 15, bottom: 30, left: 100},
 let timelineSpan = [new Date('2012-07-01'), new Date('2018-07-01')],
     prettyDateFormat = timeFormat("%a %b %e, %Y"), // prettyTimestampFormat = timeFormat("%a %b %e, %Y at %_I:%M %p")
     feedHeight = (timelineSize.height - feedPadding) - feedPadding,
+    selectedFeed = '',
     zoomAxis,
     sharedTimeScale,
     sharedTimeScale0,
@@ -126,16 +128,18 @@ function filterByDateRange(d) {
 function updateFeed(feed) {
 
     const filteredData = feed.data.filter(d => (filterByDateRange(d) && d.measurementValue > 0)),
+        filteredTrendData = feed.trendData.filter(d => (filterByDateRange(d) && d.measurementValue > 0)),
         maxMeasurement = max(filteredData, d => d.measurementValue),
         minMeasurement = min(filteredData, d => d.measurementValue),
-        yTickFormat = (maxMeasurement > 1000) ? ".2s" : ".3",
         yBase = feedPadding * (feedIndices[feed.feedInfo.feedId] + 1) + feedHeight * feedIndices[feed.feedInfo.feedId],
+        yTickFormat = (maxMeasurement > 1000) ? ".2s" : ".3",
+        measurementScale = scaleLinear().range([feedHeight, 0]).domain([minMeasurement, maxMeasurement]),
         baselineDataY = [yBase, yBase + feedHeight],
         labelData = [yBase + feedHeight],
-        measurementScale = scaleLinear().range([feedHeight, 0]).domain([minMeasurement, maxMeasurement]),
-        baseLine = select('#' + feed.feedInfo.feedId).selectAll('line.baseline').data(baselineDataY),
+        baseLine = select('#baseLine' + feed.feedInfo.feedId).selectAll('line.baseline').data(baselineDataY),
         label = select('#label' + feed.feedInfo.feedId).selectAll('text').data(labelData),
-        measurements = select('#' + feed.feedInfo.feedId).selectAll('circle').data(filteredData),
+        measurements = select('#data' + feed.feedInfo.feedId).selectAll('circle').data(filteredData),
+        trendLine = select('#trend' + feed.feedInfo.feedId).selectAll('path').data([filteredTrendData]),
         yAxis = select("#yAxis" + feed.feedInfo.feedId),
         yAxisSettings = axisLeft(measurementScale)
             .tickSize(-4)
@@ -158,11 +162,14 @@ function updateFeed(feed) {
         .attr("class", "feedLabel")
         .attr('text-anchor', 'end')
         .attr("x", -35)
-        .on('click', function() {
+        .on('click', function () {
+                selectedFeed = feed.feedInfo.feedId;
                 select('#timelineOuter').selectAll('text.selected').classed('selected', false);
                 select(this).classed('selected', true);
                 select('#timelineInner').selectAll('circle.selected').classed('selected', false);
-                select('#' + feed.feedInfo.feedId).selectAll('circle').classed('selected', true);
+                select('#timelineInner').selectAll('path.selected').classed('selected', false);
+                select('#data' + feed.feedInfo.feedId).selectAll('circle').classed('selected', true);
+                select('#trend' + feed.feedInfo.feedId).selectAll('path').classed('selected', true);
                 dataFeedSelectedRef(feed);
             }
         )
@@ -179,14 +186,29 @@ function updateFeed(feed) {
             return measurementTooltip.hide(d);
         })
         .merge(measurements)  // merge causes below to be applied to new and existing data
+        .classed('selected', feed.feedInfo.feedId === selectedFeed)
         .attr("cx", function (d) {
             return sharedTimeScale(d.timestamp);
         })
         .attr("cy", function (d) {
             return measurementScale(d.measurementValue) + yBase;
-        })
-        .attr("r", 2);
+        });
     measurements.exit().remove();
+
+    let interpLine = line()
+        .x(function (d) {
+            return sharedTimeScale(d.timestamp);
+        })
+        .y(function (d) {
+            return measurementScale(d.measurementValue) + yBase;
+        })
+        .curve(curveLinear);
+
+    trendLine.enter().append('path')
+        .merge(trendLine)
+        .classed('selected', feed.feedInfo.feedId === selectedFeed)
+        .attr("d", d => interpLine(d));
+    trendLine.exit().remove();
 
     yAxis.attr("transform", "translate(" + timelineMargin.left + "," + (timelineMargin.top / 2 + yBase) + ")");
 
@@ -209,15 +231,18 @@ function resetTimelineSpan(timespan) {
 function addFeed(feed) {
     dataFeeds.push(feed);
 
-    const newTimelineSpan = extent(feed.data, d => d.timestamp),
+    const feedIndex = Object.keys(feedIndices).length,
+        newTimelineSpan = extent(feed.data, d => d.timestamp),
         yAxis = select("#timelineRootSVG").append("g");
 
-    select('#timelineInner').append('g').attr('id', feed.feedInfo.feedId);
+    select('#timelineInner').append('g').attr('id', 'data' + feed.feedInfo.feedId);
+    select('#timelineInner').append('g').attr('id', 'trend' + feed.feedInfo.feedId);
+    select('#timelineInner').append('g').attr('id', 'baseLine' + feed.feedInfo.feedId);
     select('#timelineOuter').append('g')
         .attr('id', 'label' + feed.feedInfo.feedId)
         .attr('pointer-events', 'auto');
 
-    feedIndices[feed.feedInfo.feedId] = Object.keys(feedIndices).length;
+    feedIndices[feed.feedInfo.feedId] = feedIndex;
     timelineSpan = dataFeeds.length === 0 ? newTimelineSpan : [Math.min(timelineSpan[0], newTimelineSpan[0]), Math.max(timelineSpan[1], newTimelineSpan[1])];
     sharedTimeScale0 = scaleTime().domain(timelineSpan).range([0, timelineSize.width]);
     resetTimelineSpan(timelineSpan);
