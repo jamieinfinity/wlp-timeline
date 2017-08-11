@@ -26,12 +26,28 @@
     stroke-width: 3;
 }
 
+circle.selected {
+    fill: #dfdfdf;
+}
+
+circle {
+    fill: #efefef;
+}
+
+.feedLabel:hover {
+    fill: #333;
+}
+
 .feedLabel {
     cursor: default;
     font-family: "Monaco";
     font-size: 12px;
     fill: #aaa;
     text-transform: uppercase;
+}
+
+.feedLabel.selected {
+    fill: #333;
 }
 
 .axis-y path,

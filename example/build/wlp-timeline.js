@@ -17211,7 +17211,7 @@ var index$1 = createCommonjsModule(function (module) {
 
 // import {html} from "d3-request";
 
-const timelineMargin = {top: 5, right: 15, bottom: 30, left: 90};
+const timelineMargin = {top: 5, right: 15, bottom: 30, left: 100};
 const timelineSize = {
         height: 0,
         width: 0
@@ -17231,6 +17231,7 @@ let timelineXAxisDays;
 let timelineXAxisWeeks;
 let timelineXAxisDayNames;
 let timelineXAxisHidden;
+let dataFeedSelectedRef;
 
 
 function makeTooltipHtmlRowSingleColumn(label, text) {
@@ -17329,7 +17330,7 @@ function updateFeed(feed) {
     const filteredData = feed.data.filter(d => (filterByDateRange(d) && d.measurementValue > 0)),
         maxMeasurement = max(filteredData, d => d.measurementValue),
         minMeasurement = min(filteredData, d => d.measurementValue),
-        yTickFormat = (maxMeasurement > 1000) ? "1.5s" : ".3",
+        yTickFormat = (maxMeasurement > 1000) ? ".2s" : ".3",
         yBase = feedPadding * (feedIndices[feed.feedInfo.feedId] + 1) + feedHeight * feedIndices[feed.feedInfo.feedId],
         baselineDataY = [yBase, yBase + feedHeight],
         labelData = [yBase + feedHeight],
@@ -17356,9 +17357,17 @@ function updateFeed(feed) {
     baseLine.exit().remove();
 
     label.enter().append('text')
-        .attr('class', 'feedLabel')
+        .attr("class", "feedLabel")
         .attr('text-anchor', 'end')
-        .attr("x", -30)
+        .attr("x", -35)
+        .on('click', function() {
+                select('#timelineOuter').selectAll('text.selected').classed('selected', false);
+                select(this).classed('selected', true);
+                select('#timelineInner').selectAll('circle.selected').classed('selected', false);
+                select('#' + feed.feedInfo.feedId).selectAll('circle').classed('selected', true);
+                dataFeedSelectedRef(feed);
+            }
+        )
         .merge(label)
         .attr("y", d => (d - feedHeight * 0.5))
         .text(feed.feedInfo.measurementLabel);
@@ -17372,15 +17381,13 @@ function updateFeed(feed) {
             return measurementTooltip.hide(d);
         })
         .merge(measurements)  // merge causes below to be applied to new and existing data
-        .attr("fill", d => (d.measurementValue > 0.) ? "#666" : "#666")
-        .attr("opacity", d => (d.measurementValue > 0.) ? 1 : 0.85)
         .attr("cx", function (d) {
             return sharedTimeScale(d.timestamp);
         })
         .attr("cy", function (d) {
             return measurementScale(d.measurementValue) + yBase;
         })
-        .attr("r", d => (d.measurementValue > 0.) ? 1.5 : 0.5);
+        .attr("r", 2);
     measurements.exit().remove();
 
     yAxis.attr("transform", "translate(" + timelineMargin.left + "," + (timelineMargin.top / 2 + yBase) + ")");
@@ -17408,7 +17415,9 @@ function addFeed(feed) {
         yAxis = select("#timelineRootSVG").append("g");
 
     select('#timelineInner').append('g').attr('id', feed.feedInfo.feedId);
-    select('#timelineOuter').append('g').attr('id', 'label' + feed.feedInfo.feedId);
+    select('#timelineOuter').append('g')
+        .attr('id', 'label' + feed.feedInfo.feedId)
+        .attr('pointer-events', 'auto');
 
     feedIndices[feed.feedInfo.feedId] = Object.keys(feedIndices).length;
     timelineSpan = dataFeeds.length === 0 ? newTimelineSpan : [Math.min(timelineSpan[0], newTimelineSpan[0]), Math.max(timelineSpan[1], newTimelineSpan[1])];
@@ -17434,7 +17443,8 @@ function zoomed() {
     dataFeeds.forEach(d => updateFeed(d));
 }
 
-function makeTimeline(domElementID, width, height) {
+function makeTimeline(domElementID, width, height, dataFeedSelected) {
+    dataFeedSelectedRef = dataFeedSelected;
 
     timelineSize.width = width - timelineMargin.left - timelineMargin.right;
     timelineSize.height = height - timelineMargin.top - timelineMargin.bottom;
