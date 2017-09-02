@@ -10,7 +10,7 @@ import {max, min, extent} from "d3-array";
 import d3Tip from "d3-tip";
 // import {html} from "d3-request";
 
-const timelineMargin = {top: 5, right: 15, bottom: 30, left: 100},
+const timelineMargin = {top: 5, right: 25, bottom: 30, left: 100},
     timelineSize = {
         height: 0,
         width: 0
@@ -179,14 +179,14 @@ function updateFeed(feed) {
     label.exit().remove();
 
     measurements.enter().append('circle')
-        .on('mouseover', function (d) { // static attribute applied to newly added data
+        .merge(measurements)  // merge causes below to be applied to new and existing data
+        .classed('selected', feed.feedInfo.feedId === selectedFeed)
+        .on('mouseover', function (d) {
             return measurementTooltip.show(d);
         })
         .on('mouseleave', function (d) {
             return measurementTooltip.hide(d);
         })
-        .merge(measurements)  // merge causes below to be applied to new and existing data
-        .classed('selected', feed.feedInfo.feedId === selectedFeed)
         .attr("cx", function (d) {
             return sharedTimeScale(d.timestamp);
         })
@@ -283,7 +283,7 @@ function makeTimeline(domElementID, width, height, dataFeedSelected) {
             .attr("id", "timelineRootDiv"),
         svgRootTimeline = root.append("svg")
             .attr("id", "timelineRootSVG")
-            .attr("width", timelineSize.width + timelineMargin.left + timelineMargin.right)
+            .attr("width", timelineSize.width + timelineMargin.left + timelineMargin.right + 35)
             .attr("height", timelineSize.height + timelineMargin.top / 2 + timelineMargin.bottom),
 
         svgAxesTimeline = svgRootTimeline.append("g")

@@ -27,21 +27,23 @@
 }
 
 #timelineInner circle.selected {
-    fill: #cfcfcf;
+    fill: #A1C9DD;
 }
 
 #timelineInner circle {
-    fill: #ececec;
+    /*fill: #ececec;*/
+    fill: #dfdfdf;
     r: 2;
 }
 
 #timelineInner path.selected {
-    stroke: #6a6a6a;
+    stroke: #2F6683;
 }
 
 #timelineInner path {
     fill: none;
-    stroke: #bbb;
+    stroke: #999;
+    /*stroke: #6a6a6a;*/
     stroke-width: 2px;
 }
 
