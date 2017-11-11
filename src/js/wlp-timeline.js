@@ -1,12 +1,11 @@
 import {select, event} from "d3-selection";
 import {scaleLinear, scaleTime} from "d3-scale";
-import {line, curveLinear} from "d3-shape";
 import {format} from "d3-format";
 import {timeFormat} from "d3-time-format";
 import {timeSecond, timeMinute, timeHour, timeDay, timeWeek, timeMonth, timeYear} from "d3-time";
 import {axisBottom, axisLeft} from "d3-axis";
 import {zoom, zoomIdentity} from "d3-zoom";
-import {max, min, extent} from "d3-array";
+import {max, extent} from "d3-array";
 import d3Tip from "d3-tip";
 // import {html} from "d3-request";
 
@@ -19,7 +18,7 @@ const timelineMargin = {top: 5, right: 25, bottom: 30, left: 100},
     dataFeeds = [],
     feedIndices = {};
 
-let timelineSpan = [new Date('2012-07-01'), new Date('2018-07-01')],
+let timelineSpan = [new Date('2016-03-31'), new Date('2016-05-01')],
     prettyDateFormat = timeFormat("%a %b %e, %Y"), // prettyTimestampFormat = timeFormat("%a %b %e, %Y at %_I:%M %p")
     feedHeight = (timelineSize.height - feedPadding) - feedPadding,
     selectedFeed = '',
@@ -30,8 +29,8 @@ let timelineSpan = [new Date('2012-07-01'), new Date('2018-07-01')],
     timelineXAxisDays,
     timelineXAxisWeeks,
     timelineXAxisDayNames,
-    timelineXAxisHidden,
-    dataFeedSelectedRef;
+    timelineXAxisHidden;
+
 
 
 function makeTooltipHtmlRowSingleColumn(label, text) {
@@ -127,10 +126,10 @@ function filterByDateRange(d) {
 
 function updateFeed(feed) {
 
-    const filteredData = feed.data.filter(d => (filterByDateRange(d) && d.measurementValue > 0)),
-        filteredTrendData = feed.trendData.filter(d => (filterByDateRange(d) && d.measurementValue > 0)),
+    const filteredData = feed.data.filter(d => (filterByDateRange(d))),
         maxMeasurement = max(filteredData, d => d.measurementValue),
-        minMeasurement = min(filteredData, d => d.measurementValue),
+        // minMeasurement = min(filteredData, d => d.measurementValue),
+        minMeasurement = 0,
         yBase = feedPadding * (feedIndices[feed.feedInfo.feedId] + 1) + feedHeight * feedIndices[feed.feedInfo.feedId],
         yTickFormat = (maxMeasurement > 1000) ? ".2s" : ".3",
         measurementScale = scaleLinear().range([feedHeight, 0]).domain([minMeasurement, maxMeasurement]),
@@ -138,8 +137,7 @@ function updateFeed(feed) {
         labelData = [yBase + feedHeight],
         baseLine = select('#baseLine' + feed.feedInfo.feedId).selectAll('line.baseline').data(baselineDataY),
         label = select('#label' + feed.feedInfo.feedId).selectAll('text').data(labelData),
-        measurements = select('#data' + feed.feedInfo.feedId).selectAll('circle').data(filteredData),
-        trendLine = select('#trend' + feed.feedInfo.feedId).selectAll('path').data([filteredTrendData]),
+        measurements = select('#data' + feed.feedInfo.feedId).selectAll('rect').data(filteredData),
         yAxis = select("#yAxis" + feed.feedInfo.feedId),
         yAxisSettings = axisLeft(measurementScale)
             .tickSize(-4)
@@ -163,14 +161,14 @@ function updateFeed(feed) {
         .attr('text-anchor', 'end')
         .attr("x", -35)
         .on('click', function () {
-                selectedFeed = feed.feedInfo.feedId;
-                select('#timelineOuter').selectAll('text.selected').classed('selected', false);
-                select(this).classed('selected', true);
-                select('#timelineInner').selectAll('circle.selected').classed('selected', false);
-                select('#timelineInner').selectAll('path.selected').classed('selected', false);
-                select('#data' + feed.feedInfo.feedId).selectAll('circle').classed('selected', true);
-                select('#trend' + feed.feedInfo.feedId).selectAll('path').classed('selected', true);
-                dataFeedSelectedRef(feed);
+                // selectedFeed = feed.feedInfo.feedId;
+                // select('#timelineOuter').selectAll('text.selected').classed('selected', false);
+                // select(this).classed('selected', true);
+                // select('#timelineInner').selectAll('circle.selected').classed('selected', false);
+                // select('#timelineInner').selectAll('path.selected').classed('selected', false);
+                // select('#data' + feed.feedInfo.feedId).selectAll('circle').classed('selected', true);
+                // select('#trend' + feed.feedInfo.feedId).selectAll('path').classed('selected', true);
+                // dataFeedSelectedRef(feed);
             }
         )
         .merge(label)
@@ -178,7 +176,8 @@ function updateFeed(feed) {
         .text(feed.feedInfo.measurementLabel);
     label.exit().remove();
 
-    measurements.enter().append('circle')
+    measurements.enter().append('rect')
+        .attr("fill", "#333")
         .merge(measurements)  // merge causes below to be applied to new and existing data
         .classed('selected', feed.feedInfo.feedId === selectedFeed)
         .on('mouseover', function (d) {
@@ -187,28 +186,40 @@ function updateFeed(feed) {
         .on('mouseleave', function (d) {
             return measurementTooltip.hide(d);
         })
-        .attr("cx", function (d) {
+        .attr("x", function (d) {
             return sharedTimeScale(d.timestamp);
         })
-        .attr("cy", function (d) {
+        .attr("y", function (d) {
             return measurementScale(d.measurementValue) + yBase;
+        })
+        .attr("width", function (d) {
+            let width, gap=1,
+                date1 = new Date(d.timestamp);
+            date1.setTime(date1.getTime() + 1000 * 60);
+            width = sharedTimeScale(date1) - sharedTimeScale(d.timestamp);
+            width = width > 4*gap ? width - gap : (width > 2*gap ? width - gap/2.0 : width);
+            return width;
+        })
+        .attr("height", function (d) {
+            return feedHeight - measurementScale(d.measurementValue);
         });
+
+
+        // .attr("x", function (d) {
+        //     return sharedTimeScale(d.x);
+        // })
+        // .attr("y", function (d) {
+        //     return histogramScale(d.y);
+        // })
+        // .attr("width", function (d) {
+        //     return sharedTimeScale(new Date(d.x.getTime() + d.dx)) - sharedTimeScale(d.x) - 1;
+        // })
+        // .attr("height", function (d) {
+        //     return timelineSize.height - histogramScale(d.y);
+        // });
+
+
     measurements.exit().remove();
-
-    let interpLine = line()
-        .x(function (d) {
-            return sharedTimeScale(d.timestamp);
-        })
-        .y(function (d) {
-            return measurementScale(d.measurementValue) + yBase;
-        })
-        .curve(curveLinear);
-
-    trendLine.enter().append('path')
-        .merge(trendLine)
-        .classed('selected', feed.feedInfo.feedId === selectedFeed)
-        .attr("d", d => interpLine(d));
-    trendLine.exit().remove();
 
     yAxis.attr("transform", "translate(" + timelineMargin.left + "," + (timelineMargin.top / 2 + yBase) + ")");
 
@@ -267,13 +278,12 @@ function zoomed() {
 }
 
 function makeTimeline(domElementID, width, height, dataFeedSelected) {
-    dataFeedSelectedRef = dataFeedSelected;
 
     timelineSize.width = width - timelineMargin.left - timelineMargin.right;
     timelineSize.height = height - timelineMargin.top - timelineMargin.bottom;
 
     zoomAxis = zoom()
-        .scaleExtent([1, 1000])
+        .scaleExtent([1, 20000])
         .translateExtent([[0, 0], [timelineSize.width, timelineSize.height]])
         .extent([[0, 0], [timelineSize.width, timelineSize.height]])
         .on("zoom", zoomed);

@@ -26,84 +26,40 @@
 
 <script type="text/javascript">
 
-    wlp_timeline.makeTimeline("#rootdiv", 800, 500, feed=>{});
+    wlp_timeline.makeTimeline("#rootdiv", 1200, 180, feed=>{});
 
-    const weightData = [];
-    const weightTrendData = [];
-    const caloriesData = [];
-    const caloriesTrendData = [];
     const stepsData = [];
     const stepsTrendData = [];
+    const stepsGranularData = [];
 
-    d3.csv('./fitness_data.csv', function (error, data) {
+    d3.csv('./fitness_data.csv', function (error, data_daily) {
 
-        if(error) {
-            const startDate1 = new Date(2015, 9, 20);
-            for (let i = 0; i<585; i++) {
-                let d = new Date(startDate1.getTime() + i*3600*24*1000);
-                weightData.push(
-                    {'timestamp': new Date(d.toDateString()),
-                    'measurementValue': 200*(Math.sin(i/10.0 + 2*Math.random())**2)}
-                );
-            }
-            const startDate2 = new Date(2016, 3, 6);
-            for (let i = 0; i<241; i++) {
-                let d = new Date(startDate2.getTime() + i*3600*24*1000);
-                caloriesData.push(
-                    {'timestamp': new Date(d.toDateString()),
-                    'measurementValue': 3000*(Math.sin(i/10.0 + 2*Math.random())**2)}
-                );
-            }
-            const startDate3 = new Date(2014, 1, 22);
-            for (let i = 0; i<800; i++) {
-                let d = new Date(startDate3.getTime() + i*3600*24*1000);
-                stepsData.push(
-                    {'timestamp': new Date(d.toDateString()),
-                    'measurementValue': 30000*(Math.sin(i/10.0 + 2*Math.random())**2)}
-                );
-            }
-        } else {
-            data.forEach(function (d) {
-                let tempdate = new Date(d['Date']);
-                let tempdate2 = new Date(tempdate.toDateString());
-                weightData.push({'timestamp': tempdate2, 'measurementValue': Number(d['Weight'])});
-                weightTrendData.push({'timestamp': tempdate2, 'measurementValue': Number(d['WeightSmoothed7Days'])});
-                caloriesData.push({'timestamp': tempdate2, 'measurementValue': Number(d['Calories'])});
-                caloriesTrendData.push({'timestamp': tempdate2, 'measurementValue': Number(d['CaloriesSmoothed7Days'])});
-                stepsData.push({'timestamp': tempdate2, 'measurementValue': Number(d['Steps'])});
-                stepsTrendData.push({'timestamp': tempdate2, 'measurementValue': Number(d['StepsSmoothed7Days'])});
+        data_daily.forEach(function (d) {
+            let tempdate = new Date(d['Date']);
+            let tempdate2 = new Date(tempdate.toDateString());
+            stepsData.push({'timestamp': tempdate2, 'measurementValue': Number(d['Steps'])});
+            stepsTrendData.push({'timestamp': tempdate2, 'measurementValue': Number(d['StepsSmoothed7Days'])});
+        });
+
+        d3.csv('./steps_granular.csv', function (error, data_minutes) {
+
+            data_minutes.forEach(function (d) {
+                let tempdate = new Date(d['datetime']);
+                let tempdate2 = new Date(tempdate.toString());
+                stepsGranularData.push({'timestamp': tempdate2, 'measurementValue': Number(d['steps'])});
             });
-        }
 
-        wlp_timeline.addFeed({
-            'feedInfo': {
-                'feedId': 'steps',
-                'measurementLabel': 'Steps',
-                'measurementTimespan': 1,
-                'measurementMinimum': 3000,
-            },
-            'data': stepsData,
-            'trendData': stepsTrendData
-        });
-        wlp_timeline.addFeed({
-            'feedInfo': {
-                'feedId': 'calories',
-                'measurementLabel': 'Calories',
-                'measurementTimespan': 1,
-                'measurementMinimum': 1000,
-            },
-            'data': caloriesData,
-            'trendData': caloriesTrendData
-        });
-        wlp_timeline.addFeed({
-            'feedInfo': {
-                'feedId': 'weight',
-                'measurementLabel': 'Weight',
-                'measurementTimespan': 1,
-                'measurementMinimum': 160,
-            },
-            'data': weightData,
-            'trendData': weightTrendData
+            wlp_timeline.addFeed({
+                'feedInfo': {
+                    'feedId': 'steps',
+                    'measurementLabel': 'Steps',
+                    'measurementTimespan': 1,
+                    'measurementMinimum': 0,
+                },
+                'data': stepsGranularData,
+                'trendData': stepsGranularData
+            });
+
         });
 
     });
